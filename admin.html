@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="zh-Hant"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fashion Selection · 後台</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--bg:#FAF8F4;--surface:#FFF;--ink:#2B2925;--muted:#8A8378;--line:#E4DED3;--accent:#46563F;--accent-soft:#EBEEE6;--heart:#B5543E;--danger:#B5443E;}
+*{box-sizing:border-box;}body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans TC",system-ui,sans-serif;font-size:16px;line-height:1.6;}
+.wrap{max-width:820px;margin:0 auto;padding:0 16px 120px;}
+h1{font-family:"Fraunces",serif;font-weight:500;}
+.btn{border:0;border-radius:11px;font-family:inherit;font-size:15px;cursor:pointer;padding:11px 18px;min-height:44px;}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-ghost{background:var(--surface);border:1px solid var(--line);color:var(--ink);}
+.btn-danger{background:transparent;border:1px solid var(--danger);color:var(--danger);}
+input,textarea,select{width:100%;font-family:inherit;font-size:15px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:11px;min-height:44px;}
+textarea{min-height:80px;resize:vertical;}
+label{display:block;font-size:12px;color:var(--muted);letter-spacing:.5px;margin:12px 0 4px;}
+#login{max-width:380px;margin:14vh auto 0;padding:0 20px;text-align:center;}
+#login h1{font-size:26px;margin-bottom:4px;}
+#login p{color:var(--muted);margin-top:0;}
+#login .card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:22px;text-align:left;margin-top:18px;}
+#login .btn{width:100%;margin-top:16px;}
+.err{color:var(--danger);font-size:14px;margin-top:10px;min-height:18px;}
+#admin{display:none;}
+.top{display:flex;align-items:center;justify-content:space-between;padding:20px 0 6px;}
+.top h1{font-size:22px;margin:0;}
+.toolbar{display:flex;gap:10px;margin:14px 0 18px;}
+.item{display:flex;gap:14px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:12px;}
+.item img{width:60px;height:80px;object-fit:cover;border-radius:8px;background:#F1ECE3;flex:0 0 auto;}
+.item .meta{flex:1;min-width:0;}
+.item .meta .nm{font-weight:500;}
+.item .meta .sub{font-size:13px;color:var(--muted);}
+.item .acts{display:flex;flex-direction:column;gap:6px;}
+.item .acts .btn{padding:8px 12px;min-height:38px;font-size:14px;}
+#editor{display:none;position:fixed;inset:0;background:rgba(20,18,16,.45);z-index:50;overflow-y:auto;}
+#editor .panel{background:var(--bg);max-width:680px;margin:24px auto;border-radius:16px;padding:20px;}
+.row2{display:flex;gap:12px;}.row2>div{flex:1;}
+.strip{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+.ph{position:relative;width:74px;height:98px;border-radius:8px;overflow:hidden;border:3px solid transparent;background:#F1ECE3;}
+.ph.cover{border-color:var(--accent);}
+.ph img{width:100%;height:100%;object-fit:cover;cursor:pointer;}
+.ph .del{position:absolute;top:2px;right:2px;width:24px;height:24px;border:0;border-radius:50%;background:rgba(43,41,37,.78);color:#fff;font-size:13px;cursor:pointer;line-height:1;}
+.ph .cv{position:absolute;bottom:0;left:0;right:0;background:var(--accent);color:#fff;font-size:11px;text-align:center;}
+.addph{width:74px;height:98px;border:1px dashed var(--line);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:26px;color:var(--muted);cursor:pointer;background:var(--surface);}
+.editbar{display:flex;gap:10px;justify-content:space-between;margin-top:20px;}
+.hint{font-size:12px;color:var(--muted);margin-top:6px;}
+#busy{position:fixed;inset:0;background:rgba(250,248,244,.7);display:none;align-items:center;justify-content:center;z-index:60;font-size:15px;color:var(--accent);}
+</style></head><body>
+
+<div id="login">
+  <h1>Fashion Selection</h1><p>商品後台</p>
+  <div class="card">
+    <label>Email</label><input id="email" type="email" autocomplete="username">
+    <label>密碼</label><input id="pw" type="password" autocomplete="current-password">
+    <button class="btn btn-primary" id="loginBtn">登入</button>
+    <div class="err" id="loginErr"></div>
+  </div>
+</div>
+
+<div id="admin"><div class="wrap">
+  <div class="top"><h1>商品管理</h1><button class="btn btn-ghost" id="logout">登出</button></div>
+  <div class="toolbar"><button class="btn btn-primary" id="addBtn">＋ 新增商品</button></div>
+  <div id="list"></div>
+</div></div>
+
+<div id="editor"><div class="panel">
+  <h1 id="edTitle" style="font-size:20px;margin:0 0 6px;">編輯商品</h1>
+  <label>商品名稱</label><input id="f_name">
+  <div class="row2"><div><label>品牌</label><input id="f_brand"></div>
+    <div><label>上架日期</label><input id="f_date" type="date"></div></div>
+  <div class="row2"><div><label>分類</label><select id="f_cat"></select></div>
+    <div><label>性別</label><select id="f_gender"></select></div></div>
+  <label>敘述</label><textarea id="f_desc"></textarea>
+  <label>照片（第一張＝封面，點照片設為封面）</label>
+  <div class="strip" id="strip"></div>
+  <input id="fileInput" type="file" accept="image/*" multiple style="display:none">
+  <div class="hint">照片會自動壓縮再上傳，不用先處理。</div>
+  <div class="editbar">
+    <button class="btn btn-danger" id="delBtn">刪除此商品</button>
+    <div style="display:flex;gap:10px;">
+      <button class="btn btn-ghost" id="cancelBtn">取消</button>
+      <button class="btn btn-primary" id="saveBtn">儲存</button>
+    </div>
+  </div>
+</div></div>
+
+<div id="busy">處理中…</div>
+
+<script>
+const SB_URL="https://czdmtwmwbjruiklhseap.supabase.co";
+const SB_KEY="sb_publishable_mQRGNpslw4ZzIVZ1EZLhmw_RDHaAYtU";
+const sb=window.supabase.createClient(SB_URL,SB_KEY);
+const CATS=["服飾","包款","配件","鞋款","錶款","珠寶","居家","3C"];
+const GENDERS=[["女","女裝"],["男","男裝"],["中性","男女同款"]];
+const $=id=>document.getElementById(id);
+const busy=on=>{$("busy").style.display=on?"flex":"none";};
+let products=[], editing=null;
+
+$("f_cat").innerHTML=CATS.map(c=>`<option>${c}</option>`).join("");
+$("f_gender").innerHTML=GENDERS.map(([v,t])=>`<option value="${v}">${t}</option>`).join("");
+
+async function start(){
+  const {data:{session}}=await sb.auth.getSession();
+  if(session){showAdmin();}else{$("login").style.display="block";}
+}
+$("loginBtn").onclick=async()=>{
+  $("loginErr").textContent="";busy(true);
+  const {error}=await sb.auth.signInWithPassword({email:$("email").value.trim(),password:$("pw").value});
+  busy(false);
+  if(error){$("loginErr").textContent="登入失敗："+error.message;return;}
+  showAdmin();
+};
+$("pw").addEventListener("keydown",e=>{if(e.key==="Enter")$("loginBtn").click();});
+$("logout").onclick=async()=>{await sb.auth.signOut();location.reload();};
+function showAdmin(){$("login").style.display="none";$("admin").style.display="block";loadList();}
+
+async function loadList(){
+  busy(true);
+  const {data,error}=await sb.from("fs_products").select("*").order("listing_date",{ascending:false}).order("id",{ascending:false});
+  busy(false);
+  if(error){alert("讀取失敗："+error.message);return;}
+  products=data||[];
+  $("list").innerHTML=products.map(p=>{
+    const im=(p.images||[])[0]||"";
+    const gl=p.gender==="女"?"女裝":p.gender==="男"?"男裝":"男女同款";
+    return `<div class="item"><img src="${im}" alt="">
+      <div class="meta"><div class="nm">${p.name||"（未命名）"}</div>
+        <div class="sub">${p.brand==="Unknown"?"未標品牌":(p.brand||"")} · ${p.category||""} · ${gl} · ${(p.images||[]).length} 張</div></div>
+      <div class="acts"><button class="btn btn-ghost" onclick="editItem(${p.id})">編輯</button></div></div>`;
+  }).join("")||'<p style="color:var(--muted)">還沒有商品，按「新增商品」開始。</p>';
+}
+
+function openEditor(p){
+  editing=p;
+  $("edTitle").textContent=p.id?"編輯商品":"新增商品";
+  $("f_name").value=p.name||"";
+  $("f_brand").value=(p.brand&&p.brand!=="Unknown")?p.brand:"";
+  $("f_date").value=(p.listing_date||new Date().toISOString().slice(0,10)).slice(0,10);
+  $("f_cat").value=p.category||CATS[0];
+  $("f_gender").value=p.gender||"女";
+  $("f_desc").value=p.description||"";
+  $("delBtn").style.display=p.id?"":"none";
+  renderStrip();
+  $("editor").style.display="block";
+}
+window.editItem=id=>{const p=products.find(x=>x.id===id);openEditor(JSON.parse(JSON.stringify(p)));};
+$("addBtn").onclick=()=>openEditor({images:[]});
+$("cancelBtn").onclick=()=>{$("editor").style.display="none";editing=null;};
+
+function renderStrip(){
+  const imgs=editing.images||[];
+  $("strip").innerHTML=imgs.map((src,i)=>`<div class="ph ${i===0?'cover':''}">
+      <img src="${src}" onclick="setCover(${i})">
+      ${i===0?'<div class="cv">封面</div>':''}
+      <button class="del" onclick="delPhoto(${i})">✕</button></div>`).join("")
+    +`<div class="addph" onclick="document.getElementById('fileInput').click()">＋</div>`;
+}
+window.setCover=i=>{const a=editing.images;editing.images=[a[i],...a.filter((_,k)=>k!==i)];renderStrip();};
+window.delPhoto=i=>{editing.images.splice(i,1);renderStrip();};
+
+$("fileInput").onchange=async e=>{
+  const files=[...e.target.files];e.target.value="";
+  if(!files.length)return;busy(true);
+  try{for(const f of files){const url=await compressUpload(f);editing.images.push(url);}}
+  catch(err){alert("上傳失敗："+(err.message||err));}
+  busy(false);renderStrip();
+};
+function compressUpload(file){
+  return new Promise((res,rej)=>{
+    const img=new Image();
+    img.onload=()=>{
+      const max=1000;let w=img.naturalWidth,h=img.naturalHeight;
+      if(w>=h&&w>max){h=Math.round(h*max/w);w=max;}else if(h>w&&h>max){w=Math.round(w*max/h);h=max;}
+      const c=document.createElement("canvas");c.width=w;c.height=h;
+      c.getContext("2d").drawImage(img,0,0,w,h);
+      c.toBlob(async blob=>{
+        if(!blob){rej(new Error("圖片處理失敗"));return;}
+        const path="up_"+Date.now()+"_"+Math.random().toString(36).slice(2,7)+".jpg";
+        const {error}=await sb.storage.from("products").upload(path,blob,{contentType:"image/jpeg",upsert:true});
+        if(error){rej(error);return;}
+        res(sb.storage.from("products").getPublicUrl(path).data.publicUrl);
+      },"image/jpeg",0.72);
+    };
+    img.onerror=()=>rej(new Error("無法讀取圖片"));
+    img.src=URL.createObjectURL(file);
+  });
+}
+
+$("saveBtn").onclick=async()=>{
+  if(!editing.images||!editing.images.length){alert("請至少上傳一張照片。");return;}
+  const rec={name:$("f_name").value.trim(),brand:$("f_brand").value.trim()||"Unknown",
+    category:$("f_cat").value,gender:$("f_gender").value,description:$("f_desc").value.trim(),
+    listing_date:$("f_date").value||new Date().toISOString().slice(0,10),images:editing.images};
+  busy(true);
+  const q=editing.id?sb.from("fs_products").update(rec).eq("id",editing.id):sb.from("fs_products").insert(rec);
+  const {error}=await q;busy(false);
+  if(error){alert("儲存失敗："+error.message);return;}
+  $("editor").style.display="none";editing=null;loadList();
+};
+$("delBtn").onclick=async()=>{
+  if(!editing.id)return;
+  if(!confirm("確定刪除這件商品？此動作無法復原。"))return;
+  busy(true);const {error}=await sb.from("fs_products").delete().eq("id",editing.id);busy(false);
+  if(error){alert("刪除失敗："+error.message);return;}
+  $("editor").style.display="none";editing=null;loadList();
+};
+
+start();
+</script></body></html>
