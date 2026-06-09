@@ -11,20 +11,11 @@
 body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans TC",-apple-system,system-ui,sans-serif;font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased;}
 .wrap{max-width:1120px;margin:0 auto;}
 header{position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:1px solid var(--line);}
-.brand{padding:18px 18px 14px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;}
-.brand h1{font-family:"Fraunces",Georgia,serif;font-weight:500;font-size:26px;letter-spacing:.5px;margin:0;}
-.brand .tag{font-size:14px;color:var(--muted);}
-.cat-row{display:flex;gap:9px;overflow-x:auto;padding:0 18px 14px;scrollbar-width:none;}
-.cat-row::-webkit-scrollbar{display:none;}
-.chip{flex:0 0 auto;min-height:var(--tap);padding:0 20px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-size:16px;font-family:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;}
-.chip[aria-pressed="true"]{background:var(--accent);color:#fff;border-color:var(--accent);}
-.chip.fav-chip[aria-pressed="true"]{background:var(--heart);border-color:var(--heart);}
-.sub-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:0 18px 16px;}
-.seg{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px;}
-.seg button{min-height:38px;padding:0 16px;border:0;background:transparent;border-radius:999px;font-size:15px;font-family:inherit;color:var(--ink);cursor:pointer;}
-.seg button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent);font-weight:500;}
-.brand-select{min-height:var(--tap);padding:0 40px 0 16px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink);font-size:16px;font-family:inherit;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%238A8378' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;}
-.meta{padding:4px 18px 14px;color:var(--muted);font-size:14px;}
+.topbar{display:flex;align-items:center;gap:12px;padding:14px 16px 6px;}
+.menu-btn{width:var(--tap);height:var(--tap);flex:0 0 auto;border:1px solid var(--line);background:var(--surface);border-radius:12px;font-size:22px;line-height:1;color:var(--ink);cursor:pointer;}
+.topbar h1{font-family:"Fraunces",Georgia,serif;font-weight:500;font-size:23px;letter-spacing:.5px;margin:0;}
+.subtitle{padding:0 16px 14px;color:var(--muted);font-size:13px;}
+.meta{padding:14px 18px 12px;color:var(--muted);font-size:14px;}
 .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;padding:0 18px 40px;}
 @media(min-width:560px){.grid{grid-template-columns:repeat(3,1fr);}}
 @media(min-width:860px){.grid{grid-template-columns:repeat(4,1fr);}}
@@ -32,9 +23,7 @@ header{position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:1px s
 .thumb{position:relative;aspect-ratio:3/4;background:#F1ECE3;}
 .thumb img{width:100%;height:100%;object-fit:cover;display:block;}
 .badge{position:absolute;top:10px;left:10px;color:#fff;font-size:12px;padding:3px 9px;border-radius:999px;letter-spacing:1px;}
-.b-new{background:var(--accent);}
-.b-week{background:#5B7A8C;}
-.b-month{background:#A89F90;}
+.b-new{background:var(--accent);}.b-week{background:#5B7A8C;}.b-month{background:#A89F90;}
 .count{position:absolute;bottom:10px;left:10px;background:rgba(43,41,37,.78);color:#fff;font-size:12px;padding:2px 8px;border-radius:999px;}
 .fav{position:absolute;top:8px;right:8px;width:var(--tap);height:var(--tap);border:0;padding:0;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;}
 .fav svg{width:26px;height:26px;fill:none;stroke:#fff;stroke-width:1.8px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.35));}
@@ -48,8 +37,23 @@ header{position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:1px s
 .info .date{font-size:12px;color:var(--muted);margin-top:8px;}
 .empty{padding:60px 18px;text-align:center;color:var(--muted);line-height:1.8;}
 footer{border-top:1px solid var(--line);padding:22px 18px 40px;color:var(--muted);font-size:13px;text-align:center;}
-.detail{position:fixed;inset:0;z-index:50;background:var(--bg);overflow-y:auto;}
-.detail[hidden]{display:none;}
+.drawer-overlay{position:fixed;inset:0;background:rgba(20,18,16,.4);z-index:40;}
+.drawer-overlay[hidden]{display:none;}
+.drawer{position:fixed;top:0;left:0;bottom:0;width:84%;max-width:330px;background:var(--bg);z-index:41;display:flex;flex-direction:column;box-shadow:2px 0 24px rgba(0,0,0,.18);}
+.drawer[hidden]{display:none;}
+.drawer-head{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--line);}
+.drawer-head span{font-size:17px;font-weight:500;}
+.dx{width:42px;height:42px;border:0;background:transparent;font-size:20px;color:var(--ink);cursor:pointer;}
+.drawer-body{flex:1;overflow-y:auto;}
+.drawer-sec{padding:14px 16px;border-bottom:1px solid var(--line);}
+.drawer-sec h3{font-size:12px;letter-spacing:1.5px;color:var(--muted);margin:0 0 8px;font-weight:500;}
+.drow{display:block;width:100%;min-height:48px;padding:0 14px;border:0;background:transparent;border-radius:10px;font-size:16px;font-family:inherit;color:var(--ink);cursor:pointer;text-align:left;}
+.drow[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent);font-weight:500;}
+.drow.fav[aria-pressed="true"]{background:#F6E8E3;color:var(--heart);}
+.brand-select{width:100%;min-height:48px;padding:0 40px 0 14px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);font-size:16px;font-family:inherit;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%238A8378' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;}
+.drawer-foot{padding:14px 16px;border-top:1px solid var(--line);}
+.view-btn{width:100%;min-height:52px;border:0;background:var(--accent);color:#fff;border-radius:12px;font-size:16px;font-family:inherit;cursor:pointer;}
+.detail{position:fixed;inset:0;z-index:50;background:var(--bg);overflow-y:auto;}.detail[hidden]{display:none;}
 .detail-top{position:sticky;top:0;display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--bg);z-index:2;}
 .dclose{width:var(--tap);height:var(--tap);border:1px solid var(--line);background:var(--surface);border-radius:50%;font-size:22px;cursor:pointer;color:var(--ink);line-height:1;}
 .dcounter{font-size:14px;color:var(--muted);}
@@ -58,16 +62,14 @@ footer{border-top:1px solid var(--line);padding:22px 18px 40px;color:var(--muted
 .slide{flex:0 0 100%;scroll-snap-align:center;aspect-ratio:3/4;}
 .slide img{width:100%;height:100%;object-fit:contain;display:block;cursor:zoom-in;}
 .gdots{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;padding:12px;}
-.gdot{width:7px;height:7px;border-radius:50%;background:var(--line);}
-.gdot.on{background:var(--accent);}
+.gdot{width:7px;height:7px;border-radius:50%;background:var(--line);}.gdot.on{background:var(--accent);}
 .detail-info{max-width:680px;margin:0 auto;padding:4px 22px 70px;}
 .detail-info .eyebrow{font-size:13px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;}
 .detail-info h2{font-family:"Fraunces",Georgia,serif;font-weight:500;font-size:24px;margin:6px 0 8px;}
 .detail-info .dtag{margin-bottom:14px;}
 .ddesc{font-size:16px;line-height:1.8;}
 .detail-info .ddate{font-size:13px;color:var(--muted);margin-top:18px;}
-.zoom{position:fixed;inset:0;z-index:60;background:rgba(20,18,16,.96);display:flex;align-items:center;justify-content:center;padding:20px;}
-.zoom[hidden]{display:none;}
+.zoom{position:fixed;inset:0;z-index:60;background:rgba(20,18,16,.96);display:flex;align-items:center;justify-content:center;padding:20px;}.zoom[hidden]{display:none;}
 .zoom img{max-width:100%;max-height:100%;object-fit:contain;}
 .zclose{position:absolute;top:14px;right:14px;width:var(--tap);height:var(--tap);border:0;border-radius:50%;background:rgba(255,255,255,.16);color:#fff;font-size:20px;cursor:pointer;}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
@@ -75,16 +77,8 @@ footer{border-top:1px solid var(--line);padding:22px 18px 40px;color:var(--muted
 </style></head><body>
 <div class="wrap">
   <header>
-    <div class="brand"><h1>Fashion Selection</h1><span class="tag">每日新品 · 手機隨時逛</span></div>
-    <div class="cat-row" id="catRow"></div>
-    <div class="sub-row">
-      <div class="seg" id="genderSeg" role="group" aria-label="性別篩選">
-        <button data-g="全部" aria-pressed="true">全部</button>
-        <button data-g="女" aria-pressed="false">女裝</button>
-        <button data-g="男" aria-pressed="false">男裝</button>
-      </div>
-      <select class="brand-select" id="brandSelect" aria-label="品牌篩選"></select>
-    </div>
+    <div class="topbar"><button class="menu-btn" id="menuBtn" aria-label="開啟選單">&#9776;</button><h1>Fashion Selection</h1></div>
+    <div class="subtitle">每日新品 · 手機隨時逛</div>
   </header>
   <main>
     <p class="meta" id="meta"></p>
@@ -94,20 +88,22 @@ footer{border-top:1px solid var(--line);padding:22px 18px 40px;color:var(--muted
   <footer>每件可點進看完整相簿 · 點圖可放大 · 收藏只存在你這支手機</footer>
 </div>
 
-<div class="detail" id="detail" hidden role="dialog" aria-modal="true">
-  <div class="detail-top">
-    <button class="dclose" id="dclose" aria-label="返回">&larr;</button>
-    <span class="dcounter" id="dcounter"></span><span style="width:46px"></span>
+<div class="drawer-overlay" id="overlay" hidden></div>
+<aside class="drawer" id="drawer" hidden aria-label="篩選選單">
+  <div class="drawer-head"><span>篩選商品</span><button class="dx" id="drawerClose" aria-label="關閉">&#10005;</button></div>
+  <div class="drawer-body">
+    <div class="drawer-sec"><h3>分類</h3><div id="catList"></div></div>
+    <div class="drawer-sec" id="genderSec"><h3>性別</h3><div id="genderList"></div></div>
+    <div class="drawer-sec"><h3>品牌</h3><select class="brand-select" id="brandSelect" aria-label="品牌篩選"></select></div>
   </div>
+  <div class="drawer-foot"><button class="view-btn" id="viewBtn">查看商品</button></div>
+</aside>
+
+<div class="detail" id="detail" hidden role="dialog" aria-modal="true">
+  <div class="detail-top"><button class="dclose" id="dclose" aria-label="返回">&larr;</button><span class="dcounter" id="dcounter"></span><span style="width:46px"></span></div>
   <div class="gallery" id="gallery"></div>
   <div class="gdots" id="gdots"></div>
-  <div class="detail-info">
-    <div class="eyebrow" id="dbrand"></div>
-    <h2 id="dname"></h2>
-    <div class="dtag"><span class="tag" id="dtag"></span></div>
-    <p class="ddesc" id="ddesc"></p>
-    <div class="ddate" id="ddate"></div>
-  </div>
+  <div class="detail-info"><div class="eyebrow" id="dbrand"></div><h2 id="dname"></h2><div class="dtag"><span class="tag" id="dtag"></span></div><p class="ddesc" id="ddesc"></p><div class="ddate" id="ddate"></div></div>
 </div>
 <div class="zoom" id="zoom" hidden><button class="zclose" id="zclose" aria-label="關閉">&#10005;</button><img id="zoomimg" alt=""></div>
 
@@ -115,46 +111,49 @@ footer{border-top:1px solid var(--line);padding:22px 18px 40px;color:var(--muted
 const PRODUCTS=[{"category": "包款", "brand": "monSecret", "gender": "中性", "name": "雛菊刺繡編織托特包", "desc": "米白帆布托特包，正面整片雛菊刺繡與幾何邊框，搭配粗編織提把，休閒中帶手作感。", "listingDate": "2026-06-09", "thumb": "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p01-thumb.jpg", "images": ["https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p01-1.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p01-2.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p01-3.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p01-4.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p01-5.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p01-6.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p01-7.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p01-8.jpg"]}, {"category": "服飾", "brand": "Brunello Cucinelli", "gender": "女", "name": "串珠飾邊針織短袖", "desc": "素色針織短袖，領口與袖口飾以細緻串珠滾邊，灰與米白兩色，低調有質感。", "listingDate": "2026-06-09", "thumb": "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p02-thumb.jpg", "images": ["https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p02-1.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p02-2.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p02-3.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p02-4.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p02-5.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p02-6.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p02-7.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p02-8.jpg"]}, {"category": "服飾", "brand": "Christian Dior", "gender": "女", "name": "花卉刺繡 V 領短袖", "desc": "白色 V 領短袖上衣，領口點綴立體花卉刺繡，清爽好搭。", "listingDate": "2026-06-09", "thumb": "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p03-thumb.jpg", "images": ["https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p03-1.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p03-2.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p03-3.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p03-4.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p03-5.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p03-6.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p03-7.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p03-8.jpg"]}, {"category": "服飾", "brand": "Hermès", "gender": "女", "name": "鏤空繡花棉質短袖", "desc": "白色短袖上衣，胸前鏤空繡花圖騰，袖口波浪收邊，簡約耐看。", "listingDate": "2026-06-09", "thumb": "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p04-thumb.jpg", "images": ["https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p04-1.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p04-2.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p04-3.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p04-4.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p04-5.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p04-6.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p04-7.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p04-8.jpg"]}, {"category": "服飾", "brand": "La Perla", "gender": "女", "name": "蕾絲內衣（白）", "desc": "白色蕾絲內衣。（此件第一張為官網截圖，建議換成實品照）", "listingDate": "2026-06-09", "thumb": "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p05-thumb.jpg", "images": ["https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p05-1.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p05-2.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p05-3.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p05-4.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p05-5.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p05-6.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p05-7.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p05-8.jpg"]}, {"category": "服飾", "brand": "La Perla", "gender": "女", "name": "蕾絲細肩睡裙（黑）", "desc": "黑色蕾絲拼接細肩帶睡裙。（此件第一張為官網截圖，建議換成實品照）", "listingDate": "2026-06-09", "thumb": "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p06-thumb.jpg", "images": ["https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p06-1.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p06-2.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p06-3.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p06-4.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p06-5.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p06-6.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p06-7.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p06-8.jpg"]}, {"category": "服飾", "brand": "Louis Vuitton", "gender": "女", "name": "彩色印花棉質短袖", "desc": "白色短袖上衣，胸前彩色圖騰印花，活潑亮眼。", "listingDate": "2026-06-09", "thumb": "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p07-thumb.jpg", "images": ["https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p07-1.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p07-2.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p07-3.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p07-4.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p07-5.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p07-6.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p07-7.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p07-8.jpg"]}, {"category": "服飾", "brand": "Louis Vuitton", "gender": "男", "name": "休閒短袖短褲套組（男）", "desc": "灰色短袖搭配同色短褲，舒適休閒的成套穿搭。", "listingDate": "2026-06-09", "thumb": "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p08-thumb.jpg", "images": ["https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p08-1.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p08-2.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p08-3.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p08-4.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p08-5.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p08-6.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p08-7.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p08-8.jpg"]}, {"category": "服飾", "brand": "MM6 Maison Margiela", "gender": "女", "name": "荷葉邊雪紡襯衫", "desc": "白色輕透襯衫，領口與門襟荷葉邊設計，浪漫好穿。", "listingDate": "2026-06-09", "thumb": "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p09-thumb.jpg", "images": ["https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p09-1.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p09-2.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p09-3.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p09-4.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p09-5.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p09-6.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p09-7.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p09-8.jpg"]}, {"category": "服飾", "brand": "Ralph Lauren", "gender": "女", "name": "蕾絲下擺棉質套裝", "desc": "白色棉質上衣搭配蕾絲荷葉下擺短裙，清新度假風。", "listingDate": "2026-06-09", "thumb": "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p10-thumb.jpg", "images": ["https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p10-1.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p10-2.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p10-3.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p10-4.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p10-5.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p10-6.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p10-7.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p10-8.jpg"]}, {"category": "服飾", "brand": "Saint Laurent", "gender": "女", "name": "棕色短袖 Polo 針織上衣", "desc": "棕色合身針織短袖，小翻領設計，俐落顯瘦。（第一張為去背商品圖）", "listingDate": "2026-06-09", "thumb": "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p11-thumb.jpg", "images": ["https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p11-1.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p11-2.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p11-3.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p11-4.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p11-5.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p11-6.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p11-7.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p11-8.jpg"]}, {"category": "服飾", "brand": "Unknown", "gender": "女", "name": "羅紋無袖背心（多色）", "desc": "羅紋針織無袖背心，灰、棕、條紋多色，基本百搭。", "listingDate": "2026-06-09", "thumb": "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p12-thumb.jpg", "images": ["https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p12-1.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p12-2.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p12-3.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p12-4.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p12-5.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p12-6.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p12-7.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p12-8.jpg"]}, {"category": "服飾", "brand": "Unknown", "gender": "女", "name": "刺繡標誌黑色短袖", "desc": "黑色短袖上衣，胸前小巧刺繡標誌，簡約有型。", "listingDate": "2026-06-09", "thumb": "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p13-thumb.jpg", "images": ["https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p13-1.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p13-2.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p13-3.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p13-4.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p13-5.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p13-6.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p13-7.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p13-8.jpg"]}, {"category": "服飾", "brand": "Unknown", "gender": "女", "name": "鏤空針織無袖上衣（棕）", "desc": "棕色細針織鏤空無袖上衣，透氣輕盈，適合層次穿搭。", "listingDate": "2026-06-09", "thumb": "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p14-thumb.jpg", "images": ["https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p14-1.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p14-2.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p14-3.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p14-4.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p14-5.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p14-6.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p14-7.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p14-8.jpg"]}, {"category": "服飾", "brand": "ZIMMERMANN", "gender": "女", "name": "條紋綁帶襯衫式洋裝", "desc": "直條紋長袖襯衫洋裝，附腰帶可收腰，知性俐落。", "listingDate": "2026-06-09", "thumb": "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p15-thumb.jpg", "images": ["https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p15-1.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p15-2.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p15-3.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p15-4.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p15-5.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p15-6.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p15-7.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p15-8.jpg"]}, {"category": "配件", "brand": "Loro Piana", "gender": "中性", "name": "羅紋短襪（一組）", "desc": "灰色羅紋短襪，腳背有小巧品牌刺繡，附原廠紙盒，日常質感款。", "listingDate": "2026-06-09", "thumb": "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p16-thumb.jpg", "images": ["https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p16-1.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p16-2.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p16-3.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p16-4.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p16-5.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p16-6.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p16-7.jpg", "https://czdmtwmwbjruiklhseap.supabase.co/storage/v1/object/public/products/p16-8.jpg"]}];
 const GENDERED=new Set(["全部","服飾","鞋款"]);
 const state={category:"全部",gender:"全部",brand:"全部"};
-const grid=document.getElementById("grid"),meta=document.getElementById("meta"),empty=document.getElementById("empty"),genderSeg=document.getElementById("genderSeg");
+const grid=document.getElementById("grid"),meta=document.getElementById("meta"),empty=document.getElementById("empty");
+const drawer=document.getElementById("drawer"),overlay=document.getElementById("overlay"),genderSec=document.getElementById("genderSec");
+const catList=document.getElementById("catList"),genderList=document.getElementById("genderList"),brandSelect=document.getElementById("brandSelect"),viewBtn=document.getElementById("viewBtn");
 
-// favorites (stored only on this device)
-let favorites=new Set();
-try{const s=localStorage.getItem("fav_fs");if(s)favorites=new Set(JSON.parse(s));}catch(e){}
+let favorites=new Set();try{const s=localStorage.getItem("fav_fs");if(s)favorites=new Set(JSON.parse(s));}catch(e){}
 function saveFav(){try{localStorage.setItem("fav_fs",JSON.stringify([...favorites]));}catch(e){}}
-
 function bLabel(b){return b==="Unknown"?"未標品牌":b;}
 function gLabel(g){return g==="女"?"女裝":g==="男"?"男裝":"男女同款";}
 function fmtDate(iso){const d=new Date(iso+"T00:00:00");return (d.getMonth()+1)+"/"+d.getDate();}
 function weekStart(n){const x=new Date(n);x.setHours(0,0,0,0);x.setDate(x.getDate()-((x.getDay()+6)%7));return x;}
-function tier(iso){const d=new Date(iso+"T00:00:00");const n=new Date();const t=new Date();t.setHours(0,0,0,0);
-  if(d.getTime()===t.getTime())return{t:"新品",c:"b-new"};
-  if(d>=weekStart(n))return{t:"本週",c:"b-week"};
-  if(d.getFullYear()===n.getFullYear()&&d.getMonth()===n.getMonth())return{t:"本月",c:"b-month"};
-  return null;}
+function tier(iso){const d=new Date(iso+"T00:00:00");const n=new Date();const t=new Date();t.setHours(0,0,0,0);if(d.getTime()===t.getTime())return{t:"新品",c:"b-new"};if(d>=weekStart(n))return{t:"本週",c:"b-week"};if(d.getFullYear()===n.getFullYear()&&d.getMonth()===n.getMonth())return{t:"本月",c:"b-month"};return null;}
 
-// category chips + favorites chip
-const catRow=document.getElementById("catRow");
-const cats=["全部",...[...new Set(PRODUCTS.map(p=>p.category))]];
-cats.forEach(c=>{const b=document.createElement("button");b.className="chip";b.textContent=c;b.dataset.cat=c;b.setAttribute("aria-pressed",c==="全部");b.onclick=()=>selectCat(c,b);catRow.appendChild(b);});
-const favChip=document.createElement("button");favChip.className="chip fav-chip";favChip.dataset.cat="__fav__";favChip.innerHTML='&#9825; 我的收藏';favChip.setAttribute("aria-pressed","false");favChip.onclick=()=>selectCat("__fav__",favChip);catRow.appendChild(favChip);
-function selectCat(c,btn){state.category=c;[...catRow.children].forEach(x=>x.setAttribute("aria-pressed",x===btn));updateGenderVis();render();}
+function mkRow(label,key,cls){const b=document.createElement("button");b.className="drow"+(cls?" "+cls:"");b.dataset.key=key;b.innerHTML=label;b.setAttribute("aria-pressed",state.category===key);return b;}
+const cats=[...new Set(PRODUCTS.map(p=>p.category))];
+catList.appendChild(mkRow("全部","全部"));
+cats.forEach(c=>catList.appendChild(mkRow(c,c)));
+catList.appendChild(mkRow("&#9825; 我的收藏","__fav__","fav"));
+catList.querySelectorAll(".drow").forEach(b=>b.onclick=()=>{state.category=b.dataset.key;catList.querySelectorAll(".drow").forEach(x=>x.setAttribute("aria-pressed",x===b));updateGenderVis();render();});
 
-const brandSelect=document.getElementById("brandSelect");
+[["全部","全部"],["女裝","女"],["男裝","男"]].forEach(([lab,key])=>{const b=document.createElement("button");b.className="drow";b.dataset.g=key;b.textContent=lab;b.setAttribute("aria-pressed",state.gender===key);genderList.appendChild(b);});
+genderList.querySelectorAll(".drow").forEach(b=>b.onclick=()=>{state.gender=b.dataset.g;genderList.querySelectorAll(".drow").forEach(x=>x.setAttribute("aria-pressed",x===b));render();});
+
 const o0=document.createElement("option");o0.value="全部";o0.textContent="全部品牌";brandSelect.appendChild(o0);
 [...new Set(PRODUCTS.map(p=>p.brand))].forEach(br=>{const o=document.createElement("option");o.value=br;o.textContent=bLabel(br);brandSelect.appendChild(o);});
 brandSelect.onchange=()=>{state.brand=brandSelect.value;render();};
-genderSeg.querySelectorAll("button").forEach(b=>{b.onclick=()=>{state.gender=b.dataset.g;genderSeg.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x===b));render();};});
 
-function updateGenderVis(){const show=GENDERED.has(state.category);genderSeg.style.display=show?"":"none";if(!show){state.gender="全部";genderSeg.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x.dataset.g==="全部"));}}
+function updateGenderVis(){const show=GENDERED.has(state.category);genderSec.style.display=show?"":"none";if(!show){state.gender="全部";genderList.querySelectorAll(".drow").forEach(x=>x.setAttribute("aria-pressed",x.dataset.g==="全部"));}}
+
+function openDrawer(){drawer.hidden=false;overlay.hidden=false;document.body.style.overflow="hidden";history.pushState({l:"m"},"");}
+document.getElementById("menuBtn").onclick=openDrawer;
+document.getElementById("drawerClose").onclick=()=>history.back();
+overlay.onclick=()=>history.back();
+viewBtn.onclick=()=>history.back();
+
 function matchGender(p){if(state.gender==="全部")return true;return p.gender===state.gender||p.gender==="中性";}
-
+function catLabel(){return state.category==="__fav__"?"我的收藏":state.category;}
 function render(){
   let items;
   if(state.category==="__fav__"){items=PRODUCTS.filter(p=>favorites.has(PRODUCTS.indexOf(p)));}
   else{items=PRODUCTS.filter(p=>(state.category==="全部"||p.category===state.category)&&matchGender(p)&&(state.brand==="全部"||p.brand===state.brand));}
-  meta.textContent=items.length+" 件商品";
-  if(items.length===0){empty.hidden=false;empty.innerHTML=state.category==="__fav__"?"你還沒有收藏任何商品<br>點商品右上角的愛心加入收藏":"這個分類目前沒有商品";}
-  else{empty.hidden=true;}
+  meta.textContent=catLabel()+" · "+items.length+" 件商品";
+  viewBtn.textContent="查看商品（"+items.length+"）";
+  if(items.length===0){empty.hidden=false;empty.innerHTML=state.category==="__fav__"?"你還沒有收藏任何商品<br>點商品右上角的愛心加入收藏":"這個分類目前沒有商品";}else{empty.hidden=true;}
   grid.innerHTML=items.map(p=>{const id=PRODUCTS.indexOf(p);const faved=favorites.has(id);const tb=tier(p.listingDate);
     return `<article class="card" onclick="openDetail(${id})"><div class="thumb">
       ${tb?`<span class="badge ${tb.c}">${tb.t}</span>`:""}
@@ -187,7 +186,7 @@ function openZoom(i){zoomimg.src=cur[i];zoom.hidden=false;history.pushState({l:"
 document.getElementById("dclose").onclick=()=>history.back();
 document.getElementById("zclose").onclick=()=>history.back();
 zoom.onclick=e=>{if(e.target===zoom)history.back();};
-window.addEventListener("popstate",()=>{if(!zoom.hidden){zoom.hidden=true;}else if(!detail.hidden){detail.hidden=true;document.body.style.overflow="";}});
-window.addEventListener("keydown",e=>{if(e.key==="Escape"&&(!zoom.hidden||!detail.hidden))history.back();});
+window.addEventListener("popstate",()=>{if(!zoom.hidden){zoom.hidden=true;}else if(!detail.hidden){detail.hidden=true;document.body.style.overflow="";}else if(!drawer.hidden){drawer.hidden=true;overlay.hidden=true;document.body.style.overflow="";}});
+window.addEventListener("keydown",e=>{if(e.key==="Escape"&&(!zoom.hidden||!detail.hidden||!drawer.hidden))history.back();});
 updateGenderVis();render();
 </script></body></html>
