@@ -49,7 +49,7 @@ footer{border-top:1px solid var(--line);padding:22px 18px 40px;color:var(--muted
 .drawer-sec h3{font-size:12px;letter-spacing:1.5px;color:var(--muted);margin:0 0 8px;font-weight:500;}
 .drow{display:block;width:100%;min-height:48px;padding:0 14px;border:0;background:transparent;border-radius:10px;font-size:16px;font-family:inherit;color:var(--ink);cursor:pointer;text-align:left;}
 .drow[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent);font-weight:500;}
-.drow.fav[aria-pressed="true"]{background:#F6E8E3;color:var(--heart);}
+.favrow[aria-pressed="true"]{background:#F6E8E3;color:var(--heart);}
 .brand-select{width:100%;min-height:48px;padding:0 40px 0 14px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);font-size:16px;font-family:inherit;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%238A8378' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;}
 .drawer-foot{padding:14px 16px;border-top:1px solid var(--line);}
 .view-btn{width:100%;min-height:52px;border:0;background:var(--accent);color:#fff;border-radius:12px;font-size:16px;font-family:inherit;cursor:pointer;}
@@ -94,6 +94,7 @@ footer{border-top:1px solid var(--line);padding:22px 18px 40px;color:var(--muted
 <aside class="drawer" id="drawer" hidden aria-label="篩選選單">
   <div class="drawer-head"><span>篩選商品</span><button class="dx" id="drawerClose" aria-label="關閉">&#10005;</button></div>
   <div class="drawer-body">
+    <div class="drawer-sec"><button class="drow favrow" id="favRow" aria-pressed="false">&#9825; 我的收藏</button></div>
     <div class="drawer-sec"><h3>分類</h3><div id="catList"></div></div>
     <div class="drawer-sec" id="genderSec"><h3>性別</h3><div id="genderList"></div></div>
     <div class="drawer-sec"><h3>品牌</h3><select class="brand-select" id="brandSelect" aria-label="品牌篩選"></select></div>
@@ -115,7 +116,7 @@ const GENDERED=new Set(["全部","服飾","鞋款"]);
 const state={category:"全部",gender:"全部",brand:"全部"};
 const grid=document.getElementById("grid"),meta=document.getElementById("meta"),empty=document.getElementById("empty");
 const drawer=document.getElementById("drawer"),overlay=document.getElementById("overlay"),genderSec=document.getElementById("genderSec");
-const catList=document.getElementById("catList"),genderList=document.getElementById("genderList"),brandSelect=document.getElementById("brandSelect"),viewBtn=document.getElementById("viewBtn");
+const catList=document.getElementById("catList"),genderList=document.getElementById("genderList"),brandSelect=document.getElementById("brandSelect"),viewBtn=document.getElementById("viewBtn"),favRow=document.getElementById("favRow");
 
 let favorites=new Set();try{const s=localStorage.getItem("fav_fs");if(s)favorites=new Set(JSON.parse(s));}catch(e){}
 function saveFav(){try{localStorage.setItem("fav_fs",JSON.stringify([...favorites]));}catch(e){}}
@@ -130,8 +131,8 @@ function buildNav(){
 const cats=[...new Set(PRODUCTS.map(p=>p.category))];
 catList.appendChild(mkRow("全部","全部"));
 cats.forEach(c=>catList.appendChild(mkRow(c,c)));
-catList.appendChild(mkRow("&#9825; 我的收藏","__fav__","fav"));
-catList.querySelectorAll(".drow").forEach(b=>b.onclick=()=>{state.category=b.dataset.key;catList.querySelectorAll(".drow").forEach(x=>x.setAttribute("aria-pressed",x===b));updateGenderVis();render();});
+catList.querySelectorAll(".drow").forEach(b=>b.onclick=()=>setCat(b.dataset.key));
+favRow.onclick=()=>setCat("__fav__");
 
 [["全部","全部"],["女裝","女"],["男裝","男"]].forEach(([lab,key])=>{const b=document.createElement("button");b.className="drow";b.dataset.g=key;b.textContent=lab;b.setAttribute("aria-pressed",state.gender===key);genderList.appendChild(b);});
 genderList.querySelectorAll(".drow").forEach(b=>b.onclick=()=>{state.gender=b.dataset.g;genderList.querySelectorAll(".drow").forEach(x=>x.setAttribute("aria-pressed",x===b));render();});
@@ -142,6 +143,7 @@ brandSelect.onchange=()=>{state.brand=brandSelect.value;render();};
 }
 
 function updateGenderVis(){const show=GENDERED.has(state.category);genderSec.style.display=show?"":"none";if(!show){state.gender="全部";genderList.querySelectorAll(".drow").forEach(x=>x.setAttribute("aria-pressed",x.dataset.g==="全部"));}}
+function setCat(key){state.category=key;catList.querySelectorAll(".drow").forEach(x=>x.setAttribute("aria-pressed",x.dataset.key===key));favRow.setAttribute("aria-pressed",key==="__fav__");updateGenderVis();render();}
 
 function openDrawer(){drawer.hidden=false;overlay.hidden=false;document.body.style.overflow="hidden";history.pushState({l:"m"},"");}
 document.getElementById("menuBtn").onclick=openDrawer;
