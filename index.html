@@ -35,7 +35,7 @@ header{position:sticky;top:0;z-index:20;background:rgba(249,246,241,.85);backdro
 .info{padding:13px 14px 16px;}
 .info .eyebrow{font-size:11px;letter-spacing:1.8px;color:var(--muted);text-transform:uppercase;margin-bottom:3px;}
 .info .name{font-size:15.5px;line-height:1.45;}
-.gtag{margin:8px 0;}
+.gtag{margin:8px 0;display:flex;flex-wrap:wrap;gap:6px;}
 .tag{display:inline-block;font-size:11.5px;border-radius:6px;padding:3px 10px;letter-spacing:.5px;background:var(--accent-soft);color:var(--accent);}
 .tag-f{background:#F4E4E6;color:#A66A72;}
 .tag-m{background:#E2EAF0;color:#5E7B8E;}
@@ -122,7 +122,7 @@ body{background:#EFEDE4;}.bg-art{position:fixed;inset:0;z-index:-1;pointer-event
   <div class="detail-top"><button class="dclose" id="dclose" aria-label="關閉">&#10005;</button><span class="dcounter" id="dcounter"></span><span style="width:46px"></span></div>
   <div class="gwrap"><div class="gallery" id="gallery"></div><button class="gnav gprev" id="gprev" aria-label="上一張">&#8249;</button><button class="gnav gnext" id="gnext" aria-label="下一張">&#8250;</button></div>
   <div class="gdots" id="gdots"></div>
-  <div class="detail-info"><div class="eyebrow" id="dbrand"></div><h2 id="dname"></h2><div class="dtag"><span class="tag" id="dtag"></span></div><p class="ddesc" id="ddesc"></p><div class="ddate" id="ddate"></div></div>
+  <div class="detail-info"><div class="eyebrow" id="dbrand"></div><h2 id="dname"></h2><div class="dtag"><span class="tag" id="dcat"></span><span class="tag" id="dtag"></span></div><p class="ddesc" id="ddesc"></p><div class="ddate" id="ddate"></div></div>
 </div>
 <div class="zoom" id="zoom" hidden><button class="zclose" id="zclose" aria-label="關閉">&#10005;</button><img id="zoomimg" alt=""></div>
 
@@ -181,8 +181,8 @@ function cardHTML(p){const ix=PRODUCTS.indexOf(p);const faved=favorites.has(p.id
     </button>
     <img src="${p.thumb}" alt="${bLabel(p.brand)}" loading="lazy" decoding="async">
     ${p.images.length>1?`<span class="count">共 ${p.images.length} 張</span>`:""}
-  </div><div class="info"><div class="eyebrow">${bLabel(p.brand)}</div><div class="name">${nameOf(p)}</div>
-    <div class="gtag"><span class="tag ${gCls(p.gender)}">${gLabel(p.gender)}</span></div>
+  </div><div class="info"><div class="eyebrow">${bLabel(p.brand)}</div>${p.name?`<div class="name">${p.name}</div>`:""}
+    <div class="gtag"><span class="tag">${p.category}</span><span class="tag ${gCls(p.gender)}">${gLabel(p.gender)}</span></div>
     ${p.desc?`<div class="desc">${p.desc}</div>`:""}<div class="date">上架 ${fmtDate(p.listingDate)}</div></div></article>`;
 }
 function appendChunk(){const slice=curItems.slice(rendered,rendered+CHUNK);if(!slice.length)return;grid.insertAdjacentHTML("beforeend",slice.map(cardHTML).join(""));rendered+=slice.length;}
@@ -202,11 +202,11 @@ const gprev=document.getElementById("gprev"),gnext=document.getElementById("gnex
 function updateGnav(i){gprev.style.visibility=i<=0?"hidden":"visible";gnext.style.visibility=i>=cur.length-1?"hidden":"visible";}
 function navGallery(dir){const i=Math.round(gallery.scrollLeft/gallery.clientWidth);const ni=Math.max(0,Math.min(cur.length-1,i+dir));gallery.scrollTo({left:ni*gallery.clientWidth,behavior:"smooth"});}
 gprev.onclick=()=>navGallery(-1);gnext.onclick=()=>navGallery(1);
-const dcounter=document.getElementById("dcounter"),dbrand=document.getElementById("dbrand"),dname=document.getElementById("dname"),dtag=document.getElementById("dtag"),ddesc=document.getElementById("ddesc"),ddate=document.getElementById("ddate");
+const dcounter=document.getElementById("dcounter"),dbrand=document.getElementById("dbrand"),dname=document.getElementById("dname"),dcat=document.getElementById("dcat"),dtag=document.getElementById("dtag"),ddesc=document.getElementById("ddesc"),ddate=document.getElementById("ddate");
 const zoom=document.getElementById("zoom"),zoomimg=document.getElementById("zoomimg");
 let cur=[];
 function openDetail(id){const p=PRODUCTS[id];cur=p.images;
-  dbrand.textContent=bLabel(p.brand);dname.textContent=nameOf(p);dtag.textContent=gLabel(p.gender);dtag.className="tag "+gCls(p.gender);ddesc.textContent=p.desc||"";ddesc.style.display=p.desc?"":"none";ddate.textContent="上架日期："+fmtDate(p.listingDate);
+  dbrand.textContent=bLabel(p.brand);dname.textContent=p.name||"";dname.style.display=p.name?"":"none";dcat.textContent=p.category;dtag.textContent=gLabel(p.gender);dtag.className="tag "+gCls(p.gender);ddesc.textContent=p.desc||"";ddesc.style.display=p.desc?"":"none";ddate.textContent="上架日期："+fmtDate(p.listingDate);
   gallery.innerHTML=p.images.map((src,i)=>`<div class="slide"><img src="${src}" loading="lazy" alt="" data-i="${i}"></div>`).join("");
   gdots.innerHTML=p.images.map((_,i)=>`<span class="gdot${i===0?' on':''}" data-i="${i}"></span>`).join("");
   gallery.querySelectorAll("img").forEach(im=>im.onclick=()=>openZoom(+im.dataset.i));
