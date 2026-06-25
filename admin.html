@@ -35,18 +35,27 @@ label{display:block;font-size:12px;color:var(--muted);letter-spacing:.5px;margin
 .item .acts{display:flex;flex-direction:column;gap:6px;}
 .item .acts .btn{padding:8px 12px;min-height:38px;font-size:14px;}
 #editor{display:none;position:fixed;inset:0;background:rgba(20,18,16,.45);z-index:50;overflow-y:auto;}
-#editor .panel{background:var(--bg);max-width:680px;margin:24px auto;border-radius:16px;padding:20px;}
+#editor .panel{background:var(--bg);max-width:1080px;margin:24px auto;border-radius:16px;padding:20px;}
+.edit-cols{display:flex;gap:24px;align-items:stretch;}
+.edit-left{flex:1;min-width:0;display:flex;flex-direction:column;}
+.edit-right{flex:0 0 392px;min-width:0;}
+.edit-left #f_partner{flex:1;min-height:200px;}
+@media(max-width:760px){.edit-cols{flex-direction:column;}.edit-right{flex:none;}.edit-left #f_partner{min-height:120px;}}
 .row2{display:flex;gap:12px;}.row2>div{flex:1;}
 .strip{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
-.ph{position:relative;width:74px;height:98px;border-radius:8px;overflow:hidden;border:3px solid transparent;background:#F1ECE3;}
+.ph{position:relative;width:110px;height:146px;border-radius:8px;overflow:hidden;border:3px solid transparent;background:#F1ECE3;}
 .ph.cover{border-color:var(--accent);}
 .ph img{width:100%;height:100%;object-fit:cover;cursor:pointer;}
 .ph .del{position:absolute;top:2px;right:2px;width:24px;height:24px;border:0;border-radius:50%;background:rgba(43,41,37,.78);color:#fff;font-size:13px;cursor:pointer;line-height:1;}
 .ph .cv{position:absolute;bottom:0;left:0;right:0;background:var(--accent);color:#fff;font-size:11px;text-align:center;}
-.addph{width:74px;height:98px;border:1px dashed var(--line);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:26px;color:var(--muted);cursor:pointer;background:var(--surface);}
+.addph{width:110px;height:146px;border:1px dashed var(--line);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:26px;color:var(--muted);cursor:pointer;background:var(--surface);}
 .editbar{display:flex;gap:10px;justify-content:space-between;margin-top:20px;}
 .hint{font-size:12px;color:var(--muted);margin-top:6px;}
 #busy{position:fixed;inset:0;background:rgba(250,248,244,.7);display:none;align-items:center;justify-content:center;z-index:60;font-size:15px;color:var(--accent);}
+#pzoom{display:none;position:fixed;inset:0;background:rgba(20,18,16,.86);z-index:70;flex-direction:column;align-items:center;justify-content:center;padding:20px;}
+#pzoom img{max-width:92vw;max-height:78vh;object-fit:contain;border-radius:8px;background:#F1ECE3;}
+.pz-bar{display:flex;gap:12px;margin-top:18px;}
+.pz-bar .cur{align-self:center;color:#fff;font-size:13px;opacity:.8;}
 </style></head><body>
 
 <div id="login">
@@ -66,18 +75,24 @@ label{display:block;font-size:12px;color:var(--muted);letter-spacing:.5px;margin
 </div></div>
 
 <div id="editor"><div class="panel">
-  <h1 id="edTitle" style="font-size:20px;margin:0 0 6px;">編輯商品</h1>
-  <label>商品名稱</label><input id="f_name">
-  <div class="row2"><div><label>品牌</label><input id="f_brand"></div>
-    <div><label>上架日期</label><input id="f_date" type="date"></div></div>
-  <div class="row2"><div><label>分類</label><select id="f_cat"></select></div>
-    <div><label>性別</label><select id="f_gender"></select></div></div>
-  <label>敘述</label><textarea id="f_desc"></textarea>
-  <label>夥伴原始貼文（僅後台參考，前台不顯示）</label><textarea id="f_partner" placeholder="貼上夥伴(szwego)原始貼文內容…"></textarea>
-  <label>照片（第一張＝封面，點照片設為封面）</label>
-  <div class="strip" id="strip"></div>
-  <input id="fileInput" type="file" accept="image/*" multiple style="display:none">
-  <div class="hint">照片會自動壓縮再上傳，不用先處理。</div>
+  <h1 id="edTitle" style="font-size:20px;margin:0 0 12px;">編輯商品</h1>
+  <div class="edit-cols">
+    <div class="edit-left">
+      <label>商品名稱</label><input id="f_name">
+      <div class="row2"><div><label>品牌</label><input id="f_brand"></div>
+        <div><label>上架日期</label><input id="f_date" type="date"></div></div>
+      <div class="row2"><div><label>分類</label><select id="f_cat"></select></div>
+        <div><label>性別</label><select id="f_gender"></select></div></div>
+      <label>敘述</label><textarea id="f_desc"></textarea>
+      <label>夥伴原始貼文（僅後台參考，前台不顯示）</label><textarea id="f_partner" placeholder="貼上夥伴(szwego)原始貼文內容…"></textarea>
+    </div>
+    <div class="edit-right">
+      <label>照片（第一張＝封面，點圖片可放大／設封面）</label>
+      <div class="strip" id="strip"></div>
+      <input id="fileInput" type="file" accept="image/*" multiple style="display:none">
+      <div class="hint">點圖片可放大檢視並設為封面。照片會自動壓縮再上傳。</div>
+    </div>
+  </div>
   <div class="editbar">
     <button class="btn btn-danger" id="delBtn">刪除此商品</button>
     <div style="display:flex;gap:10px;">
@@ -88,6 +103,15 @@ label{display:block;font-size:12px;color:var(--muted);letter-spacing:.5px;margin
 </div></div>
 
 <div id="busy">處理中…</div>
+
+<div id="pzoom">
+  <img id="pzImg" src="" alt="">
+  <div class="pz-bar">
+    <span class="cur" id="pzCur"></span>
+    <button class="btn btn-ghost" id="pzClose">關閉</button>
+    <button class="btn btn-primary" id="pzCover">設為封面</button>
+  </div>
+</div>
 
 <script>
 const SB_URL="https://faukrpoggrwmcmhdcjtn.supabase.co";
@@ -154,13 +178,21 @@ $("cancelBtn").onclick=()=>{$("editor").style.display="none";editing=null;};
 function renderStrip(){
   const imgs=editing.images||[];
   $("strip").innerHTML=imgs.map((src,i)=>`<div class="ph ${i===0?'cover':''}">
-      <img src="${src}" onclick="setCover(${i})">
+      <img src="${src}" onclick="openPhotoZoom(${i})">
       ${i===0?'<div class="cv">封面</div>':''}
       <button class="del" onclick="delPhoto(${i})">✕</button></div>`).join("")
     +`<div class="addph" onclick="document.getElementById('fileInput').click()">＋</div>`;
 }
 window.setCover=i=>{const a=editing.images;editing.images=[a[i],...a.filter((_,k)=>k!==i)];renderStrip();};
 window.delPhoto=i=>{editing.images.splice(i,1);renderStrip();};
+
+let zoomIdx=-1;
+window.openPhotoZoom=i=>{zoomIdx=i;$("pzImg").src=editing.images[i];$("pzCur").textContent=`第 ${i+1} / ${editing.images.length} 張`+(i===0?"（目前封面）":"");$("pzCover").style.display=i===0?"none":"";$("pzoom").style.display="flex";};
+function closeZoom(){$("pzoom").style.display="none";zoomIdx=-1;}
+$("pzClose").onclick=closeZoom;
+$("pzCover").onclick=()=>{if(zoomIdx<0)return;setCover(zoomIdx);closeZoom();};
+$("pzoom").onclick=e=>{if(e.target===$("pzoom"))closeZoom();};
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&$("pzoom").style.display==="flex")closeZoom();});
 
 $("fileInput").onchange=async e=>{
   const files=[...e.target.files];e.target.value="";
