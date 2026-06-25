@@ -223,7 +223,7 @@ window.addEventListener("keydown",e=>{if(e.key==="Escape"&&(!zoom.hidden||!detai
 async function load(){
   meta.textContent="載入中…";
   try{
-    const {data,error}=await _sb.from("fs_products").select("*").order("listing_date",{ascending:false}).order("id",{ascending:false});
+    const {data,error}=await _sb.from("fs_products").select("id,name,brand,category,gender,description,listing_date,images").order("listing_date",{ascending:false}).order("id",{ascending:false});
     if(error)throw error;
     PRODUCTS=(data||[]).map(r=>{const im=Array.isArray(r.images)?r.images:[];return{id:r.id,category:r.category||"",brand:r.brand||"Unknown",gender:r.gender||"中性",name:r.name||"",desc:r.description||"",listingDate:(r.listing_date||"").slice(0,10),thumb:im[0]||"",images:im};});
     buildNav();updateGenderVis();render();

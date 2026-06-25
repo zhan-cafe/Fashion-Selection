@@ -73,6 +73,7 @@ label{display:block;font-size:12px;color:var(--muted);letter-spacing:.5px;margin
   <div class="row2"><div><label>分類</label><select id="f_cat"></select></div>
     <div><label>性別</label><select id="f_gender"></select></div></div>
   <label>敘述</label><textarea id="f_desc"></textarea>
+  <label>夥伴原始貼文（僅後台參考，前台不顯示）</label><textarea id="f_partner" placeholder="貼上夥伴(szwego)原始貼文內容…"></textarea>
   <label>照片（第一張＝封面，點照片設為封面）</label>
   <div class="strip" id="strip"></div>
   <input id="fileInput" type="file" accept="image/*" multiple style="display:none">
@@ -141,6 +142,7 @@ function openEditor(p){
   $("f_cat").value=p.category||CATS[0];
   $("f_gender").value=p.gender||"女";
   $("f_desc").value=p.description||"";
+  $("f_partner").value=p.partner_post||"";
   $("delBtn").style.display=p.id?"":"none";
   renderStrip();
   $("editor").style.display="block";
@@ -192,6 +194,7 @@ $("saveBtn").onclick=async()=>{
   if(!editing.images||!editing.images.length){alert("請至少上傳一張照片。");return;}
   const rec={name:$("f_name").value.trim(),brand:$("f_brand").value.trim()||"Unknown",
     category:$("f_cat").value,gender:$("f_gender").value,description:$("f_desc").value.trim(),
+    partner_post:$("f_partner").value.trim()||null,
     listing_date:$("f_date").value||new Date().toISOString().slice(0,10),images:editing.images};
   busy(true);
   const q=editing.id?sb.from("fs_products").update(rec).eq("id",editing.id):sb.from("fs_products").insert(rec);
