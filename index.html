@@ -77,7 +77,12 @@ footer{border-top:1px solid var(--line);padding:22px 18px 40px;color:var(--muted
 .detail-info .eyebrow{font-size:13px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;}
 .detail-info h2{font-family:"Fraunces",Georgia,serif;font-weight:500;font-size:24px;margin:6px 0 8px;}
 .detail-info .dtag{margin-bottom:14px;}
-.ddesc{font-size:16px;line-height:1.8;}
+.ddesc{font-size:16px;line-height:1.8;white-space:pre-line;}
+.dcode{font-size:13px;color:var(--muted);letter-spacing:1px;margin-bottom:4px;}
+.info .code{font-size:12px;color:var(--muted);letter-spacing:.5px;margin-top:2px;}
+.dcopy{margin-top:16px;display:inline-flex;align-items:center;gap:7px;background:var(--accent);color:#fff;border:0;border-radius:12px;font-family:inherit;font-size:15px;padding:12px 20px;cursor:pointer;min-height:46px;}
+.dcopy:active{opacity:.85;}
+.dcopy:disabled{background:#8FA083;cursor:default;}
 .detail-info .ddate{font-size:13px;color:var(--muted);margin-top:18px;}
 .zoom{position:fixed;inset:0;z-index:60;background:rgba(20,18,16,.96);display:flex;align-items:center;justify-content:center;padding:20px;}.zoom[hidden]{display:none;}
 .zoom img{max-width:100%;max-height:100%;object-fit:contain;}
@@ -122,7 +127,7 @@ body{background:#EFEDE4;}.bg-art{position:fixed;inset:0;z-index:-1;pointer-event
   <div class="detail-top"><button class="dclose" id="dclose" aria-label="關閉">&#10005;</button><span class="dcounter" id="dcounter"></span><span style="width:46px"></span></div>
   <div class="gwrap"><div class="gallery" id="gallery"></div><button class="gnav gprev" id="gprev" aria-label="上一張">&#8249;</button><button class="gnav gnext" id="gnext" aria-label="下一張">&#8250;</button></div>
   <div class="gdots" id="gdots"></div>
-  <div class="detail-info"><div class="eyebrow" id="dbrand"></div><h2 id="dname"></h2><div class="dtag"><span class="tag" id="dcat"></span><span class="tag" id="dtag"></span></div><p class="ddesc" id="ddesc"></p><div class="ddate" id="ddate"></div></div>
+  <div class="detail-info"><div class="dcode" id="dcode"></div><div class="eyebrow" id="dbrand"></div><h2 id="dname"></h2><div class="dtag"><span class="tag" id="dcat"></span><span class="tag" id="dtag"></span></div><p class="ddesc" id="ddesc"></p><div class="ddate" id="ddate"></div><button class="dcopy" id="dcopy">🔗 複製商品連結</button></div>
 </div>
 <div class="zoom" id="zoom" hidden><button class="zclose" id="zclose" aria-label="關閉">&#10005;</button><img id="zoomimg" alt=""></div>
 
@@ -183,13 +188,13 @@ function cardHTML(p){const ix=PRODUCTS.indexOf(p);const faved=favorites.has(p.id
     ${p.images.length>1?`<span class="count">共 ${p.images.length} 張</span>`:""}
   </div><div class="info"><div class="eyebrow">${bLabel(p.brand)}</div>${p.name?`<div class="name">${p.name}</div>`:""}
     <div class="gtag"><span class="tag">${p.category}</span><span class="tag ${gCls(p.gender)}">${gLabel(p.gender)}</span></div>
-    ${p.desc?`<div class="desc">${p.desc}</div>`:""}<div class="date">上架 ${fmtDate(p.listingDate)}</div></div></article>`;
+    ${p.desc?`<div class="desc">${p.desc}</div>`:""}<div class="date">編號 ${p.id}　·　上架 ${fmtDate(p.listingDate)}</div></div></article>`;
 }
 function appendChunk(){const slice=curItems.slice(rendered,rendered+CHUNK);if(!slice.length)return;grid.insertAdjacentHTML("beforeend",slice.map(cardHTML).join(""));rendered+=slice.length;}
 function render(){
   if(state.category==="__fav__"){curItems=PRODUCTS.filter(p=>favorites.has(p.id));}
   else{curItems=PRODUCTS.filter(p=>(state.category==="全部"||p.category===state.category)&&matchGender(p)&&(state.brand==="全部"||p.brand===state.brand));}
-  if(state.q){const q=state.q.toLowerCase();curItems=curItems.filter(p=>(nameOf(p)+" "+bLabel(p.brand)+" "+p.category+" "+(p.desc||"")).toLowerCase().includes(q));}
+  if(state.q){const q=state.q.toLowerCase();curItems=curItems.filter(p=>(p.id+" "+nameOf(p)+" "+bLabel(p.brand)+" "+p.category+" "+(p.desc||"")).toLowerCase().includes(q));}
   meta.textContent=catLabel()+" · "+curItems.length+" 件商品";
   viewBtn.textContent="查看商品（"+curItems.length+"）";
   if(curItems.length===0){empty.hidden=false;empty.innerHTML=state.category==="__fav__"?"你還沒有收藏任何商品<br>點商品右上角的愛心加入收藏":(state.q?"找不到符合「"+state.q+"」的商品":"這個分類目前沒有商品");}else{empty.hidden=true;}
@@ -204,15 +209,28 @@ function navGallery(dir){const i=Math.round(gallery.scrollLeft/gallery.clientWid
 gprev.onclick=()=>navGallery(-1);gnext.onclick=()=>navGallery(1);
 const dcounter=document.getElementById("dcounter"),dbrand=document.getElementById("dbrand"),dname=document.getElementById("dname"),dcat=document.getElementById("dcat"),dtag=document.getElementById("dtag"),ddesc=document.getElementById("ddesc"),ddate=document.getElementById("ddate");
 const zoom=document.getElementById("zoom"),zoomimg=document.getElementById("zoomimg");
-let cur=[];
-function openDetail(id){const p=PRODUCTS[id];cur=p.images;
+let cur=[],curId=null;
+function openDetail(id){const p=PRODUCTS[id];cur=p.images;curId=p.id;
+  document.getElementById("dcode").textContent="編號 "+p.id;
   dbrand.textContent=bLabel(p.brand);dname.textContent=p.name||"";dname.style.display=p.name?"":"none";dcat.textContent=p.category;dtag.textContent=gLabel(p.gender);dtag.className="tag "+gCls(p.gender);ddesc.textContent=p.desc||"";ddesc.style.display=p.desc?"":"none";ddate.textContent="上架日期："+fmtDate(p.listingDate);
   gallery.innerHTML=p.images.map((src,i)=>`<div class="slide"><img src="${src}" loading="lazy" alt="" data-i="${i}"></div>`).join("");
   gdots.innerHTML=p.images.map((_,i)=>`<span class="gdot${i===0?' on':''}" data-i="${i}"></span>`).join("");
   gallery.querySelectorAll("img").forEach(im=>im.onclick=()=>openZoom(+im.dataset.i));
   gdots.querySelectorAll(".gdot").forEach(d=>d.onclick=()=>gallery.scrollTo({left:(+d.dataset.i)*gallery.clientWidth,behavior:"smooth"}));
   gallery.scrollLeft=0;dcounter.textContent="1 / "+p.images.length;updateGnav(0);
-  detail.hidden=false;document.body.style.overflow="hidden";history.pushState({l:"d"},"");}
+  detail.hidden=false;document.body.style.overflow="hidden";history.pushState({l:"d"},"","?p="+p.id);}
+function openDetailById(pid){const idx=PRODUCTS.findIndex(p=>p.id===+pid);if(idx>=0)openDetail(idx);}
+document.getElementById("dcopy").onclick=async()=>{
+  if(curId==null)return;
+  const p=PRODUCTS.find(x=>x.id===curId);
+  const label=p&&p.name?p.name:(p?p.category:"商品");
+  const url=location.origin+location.pathname+"?p="+curId;
+  const text=label+"（編號 "+curId+"）\n"+url;
+  try{await navigator.clipboard.writeText(text);}
+  catch(e){const ta=document.createElement("textarea");ta.value=text;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();try{document.execCommand("copy");}catch(_){}ta.remove();}
+  const b=document.getElementById("dcopy"),old=b.textContent;b.textContent="✓ 已複製連結";b.disabled=true;
+  setTimeout(()=>{b.textContent=old;b.disabled=false;},1600);
+};
 gallery.onscroll=()=>{if(!cur.length)return;const i=Math.round(gallery.scrollLeft/gallery.clientWidth);dcounter.textContent=(i+1)+" / "+cur.length;gdots.querySelectorAll(".gdot").forEach((d,k)=>d.classList.toggle("on",k===i));updateGnav(i);};
 function openZoom(i){zoomimg.src=cur[i];zoom.hidden=false;history.pushState({l:"z"},"");}
 document.getElementById("dclose").onclick=()=>history.back();
@@ -227,6 +245,7 @@ async function load(){
     if(error)throw error;
     PRODUCTS=(data||[]).map(r=>{const im=Array.isArray(r.images)?r.images:[];return{id:r.id,category:r.category||"",brand:r.brand||"Unknown",gender:r.gender||"中性",name:r.name||"",desc:r.description||"",listingDate:(r.listing_date||"").slice(0,10),thumb:im[0]||"",images:im};});
     buildNav();updateGenderVis();render();
+    const pid=new URLSearchParams(location.search).get("p");if(pid)openDetailById(pid);
   }catch(e){console.error(e);meta.textContent="商品載入失敗，請重新整理或稍後再試。";}
 }
 const searchEl=document.getElementById("search");

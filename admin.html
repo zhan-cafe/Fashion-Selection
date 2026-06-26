@@ -152,7 +152,7 @@ async function loadList(){
     const gl=p.gender==="女"?"女裝":p.gender==="男"?"男裝":"男女同款";
     return `<div class="item"><img src="${im}" alt="">
       <div class="meta"><div class="nm">${p.name||"（未命名）"}</div>
-        <div class="sub">${p.brand==="Unknown"?"未標品牌":(p.brand||"")} · ${p.category||""} · ${gl} · ${(p.images||[]).length} 張</div></div>
+        <div class="sub">編號 ${p.id} · ${p.brand==="Unknown"?"未標品牌":(p.brand||"")} · ${p.category||""} · ${gl} · ${(p.images||[]).length} 張</div></div>
       <div class="acts"><button class="btn btn-ghost" onclick="editItem(${p.id})">編輯</button></div></div>`;
   }).join("")||'<p style="color:var(--muted)">還沒有商品，按「新增商品」開始。</p>';
 }
