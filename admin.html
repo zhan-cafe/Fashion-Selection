@@ -72,6 +72,26 @@ label{display:block;font-size:12px;color:var(--muted);letter-spacing:.5px;margin
 .mp-item img{width:42px;height:56px;object-fit:cover;border-radius:6px;background:#F1ECE3;flex:0 0 auto;}
 .mp-meta{min-width:0;font-size:14px;line-height:1.4;}
 .mp-sub{font-size:12px;color:var(--muted);}
+.brandfield{min-height:42px;border:1px solid var(--line);border-radius:9px;padding:7px 10px;background:var(--surface);cursor:pointer;display:flex;align-items:center;}
+.bp-tag{display:inline-block;border-radius:6px;padding:2px 9px;font-size:13px;color:#2B2925;}
+.bp-ph{color:var(--muted);font-size:14px;}
+#brandpop{display:none;position:fixed;z-index:85;width:300px;max-width:92vw;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,.16);padding:10px;}
+#bpSearch{margin-bottom:8px;}
+.bp-list{max-height:300px;overflow-y:auto;}
+.bp-opt{display:flex;align-items:center;gap:6px;padding:4px;border-radius:8px;}
+.bp-opt:hover{background:var(--bg);}
+.bp-opt.dragover{box-shadow:inset 0 2px 0 var(--accent);}
+.bp-drag{cursor:grab;color:var(--muted);font-size:14px;user-select:none;}
+.bp-opt .bp-tag{flex:1;cursor:pointer;}
+.bp-more{border:0;background:transparent;cursor:pointer;color:var(--muted);font-size:16px;padding:2px 6px;min-height:0;width:auto;border-radius:6px;}
+.bp-more:hover{background:var(--line);}
+.bp-create{padding:7px 6px;border-radius:8px;cursor:pointer;color:var(--accent);font-size:14px;}
+.bp-create:hover{background:var(--accent-soft);}
+#brandmenu{display:none;position:fixed;z-index:86;width:210px;background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,.18);padding:8px;}
+#brandmenu .mi{padding:7px 8px;border-radius:7px;cursor:pointer;font-size:14px;}
+#brandmenu .mi:hover{background:var(--bg);}
+.bm-colors{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:6px;}
+.bm-c{height:24px;border-radius:6px;border:1px solid rgba(0,0,0,.08);cursor:pointer;}
 </style></head><body>
 
 <div id="login">
@@ -121,6 +141,12 @@ label{display:block;font-size:12px;color:var(--muted);letter-spacing:.5px;margin
   <div class="mp-list" id="mpList"></div>
 </div></div>
 
+<div id="brandpop">
+  <input id="bpSearch" placeholder="搜尋或輸入品牌，按 Enter 建立">
+  <div class="bp-list" id="bpList"></div>
+</div>
+<div id="brandmenu"></div>
+
 <script>
 const SB_URL="https://faukrpoggrwmcmhdcjtn.supabase.co";
 const SB_KEY="sb_publishable_mtIVnC0l5XfUxX_ozxskqg_sbkEwbzl";
@@ -134,6 +160,105 @@ let products=[], view=[], rendered=0, newCounter=0, uploadTargetKey=null, select
 const CHUNK=24;
 const byKey=k=>products.find(p=>p._key===k);
 const today=()=>new Date().toISOString().slice(0,10);
+
+/* ---------- brand tags (Notion-style) ---------- */
+const BRAND_COLORS={default:"#EDEAE3",gray:"#E3E1DC",brown:"#EADBCE",orange:"#F4E0CC",yellow:"#F3EBC9",green:"#D9E5D6",blue:"#D6E2EC",purple:"#E4DCEF",pink:"#F2DEE6",red:"#F0D9D6"};
+let brandOptions=[], bpKey=null, dragId=null;
+async function loadBrandOptions(){
+  const {data,error}=await sb.from("fs_brand_options").select("*").order("sort_order",{ascending:true});
+  if(error){console.warn("品牌選項載入失敗（是否已建 fs_brand_options 表？）：",error.message);brandOptions=[];return;}
+  brandOptions=data||[];
+}
+function colorOf(name){const o=brandOptions.find(b=>b.name===name);return BRAND_COLORS[(o&&o.color)||"default"]||BRAND_COLORS.default;}
+function brandChipInner(p){return (p.brand&&p.brand!=="Unknown")
+  ? `<span class="bp-tag" style="background:${colorOf(p.brand)}">${esc(p.brand)}</span>`
+  : `<span class="bp-ph">選擇品牌…</span>`;}
+window.openBrandPop=(k,ev)=>{if(ev)ev.stopPropagation();bpKey=k;
+  const f=$("brandf-"+k);if(!f)return;const r=f.getBoundingClientRect();
+  const pop=$("brandpop");pop.style.display="block";
+  pop.style.left=Math.max(8,Math.min(r.left,window.innerWidth-308))+"px";
+  pop.style.top=Math.min(r.bottom+6,window.innerHeight-260)+"px";
+  $("bpSearch").value="";renderBpList("");setTimeout(()=>$("bpSearch").focus(),30);};
+function closeBrandPop(){$("brandpop").style.display="none";$("brandmenu").style.display="none";bpKey=null;}
+function renderBpList(q){
+  q=(q||"").trim();const ql=q.toLowerCase();
+  const list=brandOptions.filter(b=>!ql||b.name.toLowerCase().includes(ql));
+  let html=list.map(b=>`<div class="bp-opt" draggable="true" data-id="${b.id}">
+      <span class="bp-drag" title="拖曳排序">⠿</span>
+      <span class="bp-tag" style="background:${BRAND_COLORS[b.color||"default"]}" onclick="pickBrand(${b.id})">${esc(b.name)}</span>
+      <button class="bp-more" onclick="brandMenu(event,${b.id})">⋯</button>
+    </div>`).join("");
+  const exact=brandOptions.some(b=>b.name.toLowerCase()===ql);
+  if(q&&!exact)html+=`<div class="bp-create" onclick="createBrand()">＋ 建立「${esc(q)}」</div>`;
+  $("bpList").innerHTML=html||'<div class="bp-ph" style="padding:8px">輸入以建立新品牌</div>';
+  bindBpDrag();
+}
+$("bpSearch").oninput=()=>renderBpList($("bpSearch").value);
+$("bpSearch").onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();const q=$("bpSearch").value.trim();const o=brandOptions.find(b=>b.name.toLowerCase()===q.toLowerCase());if(o)pickBrand(o.id);else if(q)createBrand();}};
+window.pickBrand=id=>{const o=brandOptions.find(b=>b.id===id);if(!o||bpKey==null)return;const p=byKey(bpKey);if(!p)return;p.brand=o.name;markDirty(bpKey);const f=$("brandf-"+bpKey);if(f)f.innerHTML=brandChipInner(p);closeBrandPop();};
+window.createBrand=async()=>{const name=$("bpSearch").value.trim();if(!name)return;
+  const exist=brandOptions.find(b=>b.name.toLowerCase()===name.toLowerCase());
+  if(exist){pickBrand(exist.id);return;}
+  busy(true);
+  const order=brandOptions.reduce((m,b)=>Math.max(m,b.sort_order||0),0)+1;
+  const {data,error}=await sb.from("fs_brand_options").insert({name,color:"default",sort_order:order}).select("*").single();
+  busy(false);
+  if(error){alert("建立品牌失敗："+error.message);return;}
+  brandOptions.push(data);pickBrand(data.id);
+};
+window.brandMenu=(ev,id)=>{ev.stopPropagation();const o=brandOptions.find(b=>b.id===id);if(!o)return;
+  const m=$("brandmenu");const r=ev.currentTarget.getBoundingClientRect();
+  m.innerHTML=`<div class="mi" onclick="renameBrand(${id})">✎ 重新命名</div>
+    <div class="mi" style="color:var(--danger)" onclick="deleteBrand(${id})">🗑 刪除</div>
+    <div style="font-size:12px;color:var(--muted);margin:6px 4px 2px">顏色</div>
+    <div class="bm-colors">${Object.keys(BRAND_COLORS).map(c=>`<div class="bm-c" title="${c}" style="background:${BRAND_COLORS[c]}" onclick="recolorBrand(${id},'${c}')"></div>`).join("")}</div>`;
+  m.style.display="block";m.style.left=Math.max(8,Math.min(r.left,window.innerWidth-218))+"px";m.style.top=Math.min(r.bottom+4,window.innerHeight-300)+"px";
+};
+window.renameBrand=async id=>{const o=brandOptions.find(b=>b.id===id);if(!o)return;
+  const nn=prompt("重新命名品牌：",o.name);if(nn==null)return;const name=nn.trim();
+  if(!name||name===o.name){$("brandmenu").style.display="none";return;}
+  if(brandOptions.some(b=>b.name.toLowerCase()===name.toLowerCase()&&b.id!==id)){alert("已有同名品牌。");return;}
+  const updProducts=confirm('要把所有「'+o.name+'」的商品一起改成「'+name+'」嗎？\n確定＝商品與標籤一起改；取消＝只改標籤名稱。');
+  busy(true);
+  const {error}=await sb.from("fs_brand_options").update({name}).eq("id",id);
+  if(!error&&updProducts){await sb.from("fs_products").update({brand:name}).eq("brand",o.name);products.forEach(p=>{if(p.brand===o.name)p.brand=name;});}
+  busy(false);
+  if(error){alert("改名失敗："+error.message);return;}
+  o.name=name;$("brandmenu").style.display="none";renderBpList($("bpSearch").value);
+  if(updProducts)refreshBrandChips();
+};
+window.deleteBrand=async id=>{const o=brandOptions.find(b=>b.id===id);if(!o)return;
+  if(!confirm('刪除品牌標籤「'+o.name+'」？\n（已使用此品牌的商品仍保留文字，只是選項清單少一個。）'))return;
+  busy(true);const {error}=await sb.from("fs_brand_options").delete().eq("id",id);busy(false);
+  if(error){alert("刪除失敗："+error.message);return;}
+  brandOptions=brandOptions.filter(b=>b.id!==id);$("brandmenu").style.display="none";renderBpList($("bpSearch").value);
+};
+window.recolorBrand=async(id,c)=>{const o=brandOptions.find(b=>b.id===id);if(!o)return;o.color=c;
+  $("brandmenu").style.display="none";renderBpList($("bpSearch").value);refreshBrandChips();
+  const {error}=await sb.from("fs_brand_options").update({color:c}).eq("id",id);if(error)console.warn(error.message);
+};
+function refreshBrandChips(){view.slice(0,rendered).forEach(p=>{const f=$("brandf-"+p._key);if(f)f.innerHTML=brandChipInner(p);});}
+function bindBpDrag(){
+  $("bpList").querySelectorAll(".bp-opt").forEach(el=>{
+    el.ondragstart=()=>{dragId=+el.dataset.id;};
+    el.ondragover=e=>{e.preventDefault();el.classList.add("dragover");};
+    el.ondragleave=()=>el.classList.remove("dragover");
+    el.ondrop=async e=>{e.preventDefault();el.classList.remove("dragover");
+      const overId=+el.dataset.id;if(dragId==null||dragId===overId){dragId=null;return;}
+      const from=brandOptions.findIndex(b=>b.id===dragId),to=brandOptions.findIndex(b=>b.id===overId);
+      if(from<0||to<0){dragId=null;return;}
+      const [mv]=brandOptions.splice(from,1);brandOptions.splice(to,0,mv);
+      brandOptions.forEach((b,i)=>b.sort_order=i);renderBpList($("bpSearch").value);
+      dragId=null;
+      const {error}=await sb.from("fs_brand_options").upsert(brandOptions.map(b=>({id:b.id,name:b.name,color:b.color||"default",sort_order:b.sort_order})));
+      if(error)console.warn("排序儲存失敗："+error.message);
+    };
+  });
+}
+document.addEventListener("click",e=>{
+  const pop=$("brandpop"),m=$("brandmenu");
+  if(pop.style.display==="block"&&!pop.contains(e.target)&&!m.contains(e.target)&&!(e.target.closest&&e.target.closest(".brandfield")))closeBrandPop();
+});
 function recOf(p){return {name:(p.name||"").trim(),brand:(p.brand||"").trim()||"Unknown",category:p.category||CATS[0],gender:p.gender||"女",description:(p.description||"").trim(),partner_post:(p.partner_post||"").trim()||null,listing_date:(p.listing_date||today()).slice(0,10),images:p.images||[]};}
 
 /* ---------- auth ---------- */
@@ -156,9 +281,10 @@ function showAdmin(){$("login").style.display="none";$("admin").style.display="b
 async function loadProducts(){
   busy(true);
   const {data,error}=await sb.from("fs_products").select("*").order("listing_date",{ascending:false}).order("id",{ascending:false});
-  busy(false);
-  if(error){alert("讀取失敗："+error.message);return;}
+  if(error){busy(false);alert("讀取失敗："+error.message);return;}
   products=(data||[]).map(p=>({...p,_key:"id"+p.id,_dirty:false}));
+  await loadBrandOptions();
+  busy(false);
   applyFilter();
 }
 
@@ -171,7 +297,7 @@ function cardHTML(p){const k=p._key;const brandVal=(p.brand&&p.brand!=="Unknown"
     <div class="strip" id="strip-${k}"></div>
     <label>商品名稱</label><input id="name-${k}" value="${esc(p.name)}" oninput="updateField('${k}','name',this.value)">
     <div class="row2">
-      <div><label>品牌</label><input id="brand-${k}" value="${esc(brandVal)}" oninput="updateField('${k}','brand',this.value)"></div>
+      <div><label>品牌</label><div class="brandfield" id="brandf-${k}" onclick="openBrandPop('${k}',event)">${brandChipInner(p)}</div></div>
       <div><label>上架日期</label><input type="date" id="date-${k}" value="${esc((p.listing_date||"").slice(0,10))}" onchange="updateField('${k}','listing_date',this.value)"></div>
     </div>
     <div class="row2">
