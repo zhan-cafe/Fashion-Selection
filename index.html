@@ -132,14 +132,6 @@ body{background:#EFEDE4;}.bg-art{position:fixed;inset:0;z-index:-1;pointer-event
     <div class="topbar"><button class="menu-btn" id="menuBtn" aria-label="開啟選單">&#9776;</button><div class="wordmark"><h1>Fashion Selection</h1><div class="tagline">每日新品 · 隨時逛</div></div><span></span></div>
   </header>
   <main>
-    <section class="datebar">
-      <button class="datebar-btn" id="dateToggle" aria-expanded="false"><span id="dateLabel">載入中…</span><span class="chev" id="dateChev">▾</span></button>
-      <div class="calwrap" id="calwrap" hidden>
-        <div class="cal-head"><button id="calPrev" aria-label="上個月">&lsaquo;</button><span id="calTitle"></span><button id="calNext" aria-label="下個月">&rsaquo;</button></div>
-        <div class="cal-grid" id="calGrid"></div>
-        <button class="calall" id="calAll" aria-pressed="false">看全部日期</button>
-      </div>
-    </section>
     <input id="search" class="search" type="search" placeholder="搜尋 名稱 / 品牌 / 分類" aria-label="搜尋商品">
     <p class="meta" id="meta"></p>
     <div class="grid" id="grid"></div>
@@ -163,6 +155,11 @@ body{background:#EFEDE4;}.bg-art{position:fixed;inset:0;z-index:-1;pointer-event
   <div class="drawer-head"><span>篩選商品</span><button class="dx" id="drawerClose" aria-label="關閉">&#10005;</button></div>
   <div class="drawer-body">
     <div class="drawer-sec"><button class="drow favrow" id="favRow" aria-pressed="false">&#9825; 我的收藏</button></div>
+    <div class="drawer-sec"><h3>依日期</h3>
+      <div class="cal-head"><button id="calPrev" aria-label="上個月">&lsaquo;</button><span id="calTitle"></span><button id="calNext" aria-label="下個月">&rsaquo;</button></div>
+      <div class="cal-grid" id="calGrid"></div>
+      <button class="drow" id="calAll" style="margin-top:8px" aria-pressed="false">看全部日期</button>
+    </div>
     <div class="drawer-sec"><h3>分類</h3><div id="catList"></div></div>
     <div class="drawer-sec" id="genderSec"><h3>性別</h3><div id="genderList"></div></div>
     <div class="drawer-sec"><h3>品牌</h3><select class="brand-select" id="brandSelect" aria-label="品牌篩選"></select></div>
@@ -368,19 +365,16 @@ function renderCalendar(){
   calGrid.innerHTML=html;
   calAll.setAttribute("aria-pressed",state.date==null);
 }
-window.pickDate=ds=>{state.date=ds;_celebrated=null;renderCalendar();render();maybeCelebrate();openCal(false);};
+window.pickDate=ds=>{state.date=ds;_celebrated=null;renderCalendar();render();maybeCelebrate();if(!drawer.hidden)history.back();};
 document.getElementById("calPrev").onclick=()=>{if(--calM<0){calM=11;calY--;}renderCalendar();};
 document.getElementById("calNext").onclick=()=>{if(++calM>11){calM=0;calY++;}renderCalendar();};
-calAll.onclick=()=>{state.date=null;renderCalendar();render();openCal(false);};
+calAll.onclick=()=>{state.date=null;renderCalendar();render();if(!drawer.hidden)history.back();};
 
-const dateToggle=document.getElementById("dateToggle"),calwrap=document.getElementById("calwrap");
-function openCal(open){calwrap.hidden=!open;dateToggle.setAttribute("aria-expanded",open?"true":"false");}
-dateToggle.onclick=()=>openCal(calwrap.hidden);
 const toTopBtn=document.getElementById("toTop");
 window.addEventListener("scroll",()=>{toTopBtn.hidden=window.scrollY<600;});
 toTopBtn.onclick=()=>window.scrollTo({top:0,behavior:"smooth"});
 document.getElementById("deTop").onclick=()=>window.scrollTo({top:0,behavior:"smooth"});
-document.getElementById("deDate").onclick=()=>{window.scrollTo({top:0,behavior:"smooth"});openCal(true);};
+document.getElementById("deDate").onclick=()=>{window.scrollTo({top:0,behavior:"smooth"});openDrawer();};
 
 load();
 </script></body></html>
