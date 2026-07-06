@@ -37,9 +37,9 @@ header{position:sticky;top:0;z-index:20;background:rgba(249,246,241,.85);backdro
 .info .name{font-size:15.5px;line-height:1.45;}
 .gtag{margin:8px 0;display:flex;flex-wrap:wrap;gap:6px;}
 .tag{display:inline-block;font-size:11.5px;border-radius:6px;padding:3px 10px;letter-spacing:.5px;background:var(--accent-soft);color:var(--accent);}
-.tag-f{background:#F4E4E6;color:#A66A72;}
-.tag-m{background:#E2EAF0;color:#5E7B8E;}
-.tag-u{background:#EAE4F0;color:#7B6C92;}
+.tag-f{background:#FADCE6;color:#B04A66;}
+.tag-m{background:#D8E6F2;color:#3E6E93;}
+.tag-u{background:#E8DCF3;color:#6E4E97;}
 .info .desc{font-size:13.5px;color:var(--muted);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
 .info .date{font-size:11.5px;color:#B4AD9F;margin-top:9px;letter-spacing:.3px;}
 .empty{padding:60px 18px;text-align:center;color:var(--muted);line-height:1.8;}
@@ -190,7 +190,7 @@ const catList=document.getElementById("catList"),genderList=document.getElementB
 let favorites=new Set();try{const s=localStorage.getItem("fav_fs_v2");if(s)favorites=new Set(JSON.parse(s));}catch(e){}
 function saveFav(){try{localStorage.setItem("fav_fs_v2",JSON.stringify([...favorites]));}catch(e){}}
 function bLabel(b){return b==="Unknown"?"未標品牌":b;}
-function gLabel(g){return g==="女"?"女裝":g==="男"?"男裝":"男女同款";}
+function gLabel(g){return g==="女"?"♀ 女款":g==="男"?"♂ 男款":"♀♂ 中性款";}
 function gCls(g){return g==="女"?"tag-f":g==="男"?"tag-m":"tag-u";}
 function fmtDate(iso){const d=new Date(iso+"T00:00:00");return (d.getMonth()+1)+"/"+d.getDate();}
 function weekStart(n){const x=new Date(n);x.setHours(0,0,0,0);x.setDate(x.getDate()-((x.getDay()+6)%7));return x;}
@@ -204,7 +204,7 @@ cats.forEach(c=>catList.appendChild(mkRow(c,c)));
 catList.querySelectorAll(".drow").forEach(b=>b.onclick=()=>setCat(b.dataset.key));
 favRow.onclick=()=>setCat("__fav__");
 
-[["全部","全部"],["女裝","女"],["男裝","男"]].forEach(([lab,key])=>{const b=document.createElement("button");b.className="drow";b.dataset.g=key;b.textContent=lab;b.setAttribute("aria-pressed",state.gender===key);genderList.appendChild(b);});
+[["全部","全部"],["♀ 女款","女"],["♂ 男款","男"]].forEach(([lab,key])=>{const b=document.createElement("button");b.className="drow";b.dataset.g=key;b.textContent=lab;b.setAttribute("aria-pressed",state.gender===key);genderList.appendChild(b);});
 genderList.querySelectorAll(".drow").forEach(b=>b.onclick=()=>{state.gender=b.dataset.g;genderList.querySelectorAll(".drow").forEach(x=>x.setAttribute("aria-pressed",x===b));render();});
 
 const o0=document.createElement("option");o0.value="全部";o0.textContent="全部品牌";brandSelect.appendChild(o0);

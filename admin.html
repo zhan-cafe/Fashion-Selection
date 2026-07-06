@@ -152,7 +152,7 @@ const SB_URL="https://faukrpoggrwmcmhdcjtn.supabase.co";
 const SB_KEY="sb_publishable_mtIVnC0l5XfUxX_ozxskqg_sbkEwbzl";
 const sb=window.supabase.createClient(SB_URL,SB_KEY);
 const CATS=["服飾","包款","配件","鞋款","錶款","珠寶","居家","3C"];
-const GENDERS=[["女","女裝"],["男","男裝"],["中性","男女同款"]];
+const GENDERS=[["女","♀ 女款"],["男","♂ 男款"],["中性","♀♂ 中性款"]];
 const $=id=>document.getElementById(id);
 const busy=on=>{$("busy").style.display=on?"flex":"none";};
 const esc=s=>String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
