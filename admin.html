@@ -92,6 +92,22 @@ label{display:block;font-size:12px;color:var(--muted);letter-spacing:.5px;margin
 #brandmenu .mi:hover{background:var(--bg);}
 .bm-colors{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:6px;}
 .bm-c{height:24px;border-radius:6px;border:1px solid rgba(0,0,0,.08);cursor:pointer;}
+.cardid{text-align:right;font-size:12px;color:var(--muted);letter-spacing:.3px;margin-bottom:4px;}
+#calToggle[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);}
+#calPanel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;margin:0 0 16px;max-width:360px;}
+#calPanel[hidden]{display:none;}
+.cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.cal-head button{width:34px;height:34px;border:1px solid var(--line);background:var(--surface);border-radius:8px;font-size:16px;cursor:pointer;color:var(--ink);}
+.cal-head span{font-size:14px;font-weight:500;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+.cal-wd{text-align:center;font-size:11px;color:var(--muted);padding:2px 0;}
+.cal-day{position:relative;aspect-ratio:1;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:13px;color:#cfc8ba;}
+.cal-day.has{background:var(--accent-soft);color:var(--ink);cursor:pointer;}
+.cal-day.has:hover{background:var(--accent);color:#fff;}
+.cal-day.sel{background:var(--accent);color:#fff;}
+.cal-day .c{font-size:9px;opacity:.85;line-height:1;}
+#calAll{width:100%;min-height:40px;margin-top:10px;border:1px solid var(--line);background:var(--bg);border-radius:9px;font-family:inherit;font-size:14px;color:var(--ink);cursor:pointer;}
+#calAll[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent);font-weight:500;}
 </style></head><body>
 
 <div id="login">
@@ -108,8 +124,14 @@ label{display:block;font-size:12px;color:var(--muted);letter-spacing:.5px;margin
   <div class="top"><h1>商品管理</h1><button class="btn btn-ghost" id="logout">登出</button></div>
   <div class="toolbar">
     <button class="btn btn-primary" id="addBtn">＋ 新增商品</button>
+    <button class="btn btn-ghost" id="calToggle" aria-pressed="false">📅 依日期</button>
     <input class="search" id="search" type="search" placeholder="搜尋 名稱 / 品牌 / 分類 / 敘述 / 貼文" aria-label="搜尋">
     <span class="count" id="count"></span>
+  </div>
+  <div id="calPanel" hidden>
+    <div class="cal-head"><button id="calPrev" aria-label="上個月">&lsaquo;</button><span id="calTitle"></span><button id="calNext" aria-label="下個月">&rsaquo;</button></div>
+    <div class="cal-grid" id="calGrid"></div>
+    <button id="calAll" aria-pressed="false">全部日期</button>
   </div>
   <div class="cardgrid" id="grid"></div>
   <div id="sentinel" aria-hidden="true"></div>
@@ -157,6 +179,7 @@ const $=id=>document.getElementById(id);
 const busy=on=>{$("busy").style.display=on?"flex":"none";};
 const esc=s=>String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 let products=[], view=[], rendered=0, newCounter=0, uploadTargetKey=null, selected=[];
+let adminDate=null, calY=null, calM=null, byDate={};
 const CHUNK=24;
 const byKey=k=>products.find(p=>p._key===k);
 const today=()=>new Date().toISOString().slice(0,10);
@@ -292,6 +315,9 @@ async function loadProducts(){
   products=rows.map(p=>({...p,_key:"id"+p.id,_dirty:false}));
   await loadBrandOptions();
   busy(false);
+  buildByDate();
+  const latest=Object.keys(byDate).sort().pop();const d0=latest?new Date(latest+"T00:00:00"):new Date();calY=d0.getFullYear();calM=d0.getMonth();
+  renderCalendar();updateCalToggle();
   applyFilter();
 }
 
@@ -301,6 +327,7 @@ function genderOpts(cur){return GENDERS.map(([v,t])=>`<option value="${v}"${v===
 function cardHTML(p){const k=p._key;const brandVal=(p.brand&&p.brand!=="Unknown")?p.brand:"";
   return `<div class="card${p._dirty?" dirty":""}${selected.includes(k)?" selected":""}" id="card-${k}">
     <label class="selbox" title="選取以合併"><input type="checkbox" ${selected.includes(k)?"checked":""} onchange="toggleSel('${k}',this.checked)"></label>
+    <div class="cardid">${p.id?("編號 "+p.id):"新商品·未儲存"}</div>
     <div class="strip" id="strip-${k}"></div>
     <label>商品名稱</label><input id="name-${k}" value="${esc(p.name)}" oninput="updateField('${k}','name',this.value)">
     <div class="row2">
@@ -403,7 +430,7 @@ window.saveCard=async k=>{const p=byKey(k);if(!p)return;
   else{const {data,error:e2}=await sb.from("fs_products").insert(rec).select("id").single();error=e2;if(!error&&data)p.id=data.id;}
   if(error){alert("儲存失敗："+error.message);if(b){b.disabled=false;b.textContent=p.id?"儲存":"新增";}return;}
   p._dirty=false;
-  const c=$("card-"+k);if(c)c.classList.remove("dirty");
+  const c=$("card-"+k);if(c){c.classList.remove("dirty");const idEl=c.querySelector(".cardid");if(idEl&&p.id)idEl.textContent="編號 "+p.id;}
   if(b){b.textContent="✓ 已儲存";setTimeout(()=>{if(!p._dirty&&b){b.textContent="儲存";b.disabled=true;}},1500);}
 };
 window.delCard=async k=>{const p=byKey(k);if(!p)return;
@@ -429,10 +456,34 @@ $("addBtn").onclick=()=>{
 const grid=$("grid"),sentinel=$("sentinel"),search=$("search");
 function applyFilter(){
   const q=(search.value||"").trim().toLowerCase();
-  view=q?products.filter(p=>((p.name||"")+" "+(p.brand||"")+" "+(p.category||"")+" "+(p.description||"")+" "+(p.partner_post||"")).toLowerCase().includes(q)):products.slice();
+  let list=products;
+  if(adminDate)list=list.filter(p=>(p.listing_date||"").slice(0,10)===adminDate);
+  if(q)list=list.filter(p=>((p.name||"")+" "+(p.brand||"")+" "+(p.category||"")+" "+(p.description||"")+" "+(p.partner_post||"")).toLowerCase().includes(q));
+  view=list.slice();
   rendered=0;grid.innerHTML="";appendChunk();
-  $("count").textContent=view.length+" 件"+(q?"（共 "+products.length+"）":"");
+  $("count").textContent=view.length+" 件"+(adminDate?("　"+adminDate):"")+((q||adminDate)?"（共 "+products.length+"）":"");
 }
+/* ---------- 月曆日期篩選 ---------- */
+const CAL_WD=["日","一","二","三","四","五","六"];
+function pad2(n){return (n<10?"0":"")+n;}
+function buildByDate(){byDate={};products.forEach(p=>{const d=(p.listing_date||"").slice(0,10);if(d)(byDate[d]=byDate[d]||[]).push(p.id);});}
+function updateCalToggle(){const t=$("calToggle");if(!t)return;t.textContent=adminDate?("📅 "+adminDate):"📅 依日期";t.setAttribute("aria-pressed",adminDate!=null);}
+function renderCalendar(){
+  if(calY==null)return;
+  $("calTitle").textContent=calY+" 年 "+(calM+1)+" 月";
+  let html=CAL_WD.map(w=>`<div class="cal-wd">${w}</div>`).join("");
+  const first=new Date(calY,calM,1).getDay(),days=new Date(calY,calM+1,0).getDate();
+  for(let i=0;i<first;i++)html+=`<div class="cal-day"></div>`;
+  for(let d=1;d<=days;d++){const ds=calY+"-"+pad2(calM+1)+"-"+pad2(d);const arr=byDate[ds];
+    if(arr&&arr.length){const sel=adminDate===ds;html+=`<div class="cal-day has${sel?" sel":""}" onclick="pickDate('${ds}')"><span>${d}</span><span class="c">${arr.length}</span></div>`;}
+    else html+=`<div class="cal-day">${d}</div>`;}
+  $("calGrid").innerHTML=html;$("calAll").setAttribute("aria-pressed",adminDate==null);
+}
+window.pickDate=ds=>{adminDate=ds;renderCalendar();updateCalToggle();applyFilter();$("calPanel").hidden=true;};
+$("calToggle").onclick=()=>{$("calPanel").hidden=!$("calPanel").hidden;};
+$("calPrev").onclick=()=>{if(--calM<0){calM=11;calY--;}renderCalendar();};
+$("calNext").onclick=()=>{if(++calM>11){calM=0;calY++;}renderCalendar();};
+$("calAll").onclick=()=>{adminDate=null;renderCalendar();updateCalToggle();applyFilter();$("calPanel").hidden=true;};
 function appendChunk(){
   const slice=view.slice(rendered,rendered+CHUNK);if(!slice.length)return;
   grid.insertAdjacentHTML("beforeend",slice.map(cardHTML).join(""));
