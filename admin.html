@@ -125,7 +125,7 @@ label{display:block;font-size:12px;color:var(--muted);letter-spacing:.5px;margin
   <div class="toolbar">
     <button class="btn btn-primary" id="addBtn">＋ 新增商品</button>
     <button class="btn btn-ghost" id="calToggle" aria-pressed="false">📅 依日期</button>
-    <input class="search" id="search" type="search" placeholder="搜尋 名稱 / 品牌 / 分類 / 敘述 / 貼文" aria-label="搜尋">
+    <input class="search" id="search" type="search" placeholder="搜尋 編號 / 名稱 / 品牌 / 分類 / 敘述 / 貼文" aria-label="搜尋">
     <span class="count" id="count"></span>
   </div>
   <div id="calPanel" hidden>
@@ -458,7 +458,7 @@ function applyFilter(){
   const q=(search.value||"").trim().toLowerCase();
   let list=products;
   if(adminDate)list=list.filter(p=>(p.listing_date||"").slice(0,10)===adminDate);
-  if(q)list=list.filter(p=>((p.name||"")+" "+(p.brand||"")+" "+(p.category||"")+" "+(p.description||"")+" "+(p.partner_post||"")).toLowerCase().includes(q));
+  if(q)list=list.filter(p=>((p.id||"")+" "+(p.name||"")+" "+(p.brand||"")+" "+(p.category||"")+" "+(p.description||"")+" "+(p.partner_post||"")).toLowerCase().includes(q));
   view=list.slice();
   rendered=0;grid.innerHTML="";appendChunk();
   $("count").textContent=view.length+" 件"+(adminDate?("　"+adminDate):"")+((q||adminDate)?"（共 "+products.length+"）":"");
