@@ -170,8 +170,8 @@ label{display:block;font-size:12px;color:var(--muted);letter-spacing:.5px;margin
 <div id="brandmenu"></div>
 
 <script>
-const SB_URL="https://faukrpoggrwmcmhdcjtn.supabase.co";
-const SB_KEY="sb_publishable_mtIVnC0l5XfUxX_ozxskqg_sbkEwbzl";
+const SB_URL="https://mhvodyzlwhnsmqmdgwgg.supabase.co";
+const SB_KEY="sb_publishable_RUZz6pkJrwiWHnmdtu6jUA_7safzg1U";
 const sb=window.supabase.createClient(SB_URL,SB_KEY);
 const CATS=["服飾","包款","配件","鞋款","錶款","珠寶","居家","3C"];
 const GENDERS=[["女","♀ 女款"],["男","♂ 男款"],["中性","♀♂ 中性款"]];
@@ -377,21 +377,51 @@ $("fileInput").onchange=async e=>{
   catch(err){alert("上傳失敗："+(err.message||err));}
   busy(false);renderCardStrip(p);markDirty(p._key);
 };
+/* 圖片規格。跟批次上架用的 _工具/fs_image.js 是同一組數字，兩邊要一起改。
+   訂這組數字的依據（2026-09-01 拿實際商品照量的）：關鍵是**每畫素的資訊量**，
+   不是檔案大小。長邊 1200 壓到 300KB 時每畫素還有 0.24 bytes，跟湛莊園菜單照
+   同一個水準；不降尺寸直接壓到 300KB 的話會掉到 0.18，布料紋理開始糊。
+   所以順序一定是**先降尺寸、再降品質**。
+   縮圖 500 寬是給列表頁卡片用的：手機兩欄每張約 170 CSS px，三倍螢幕 510 實體 px。 */
+const IMG_SPEC={長邊:1200,上限:300*1024,起始:0.86,最低:0.5};
+const TH_SPEC ={寬:500,  上限: 90*1024,起始:0.78,最低:0.45};
+
+function drawTo(img,w,h){const c=document.createElement("canvas");c.width=w;c.height=h;
+  const x=c.getContext("2d");x.imageSmoothingQuality="high";x.drawImage(img,0,0,w,h);return c;}
+function toBlob(c,q){return new Promise(r=>c.toBlob(r,"image/jpeg",q));}
+/* 品質階梯：從起始品質往下試，壓進上限就停。壓不下去最低就停在「最低」，
+   不會無止境降下去——真的壓不下去的通常是雜訊很多的暗照，再降只會更醜。 */
+async function squeeze(c,{上限,起始,最低}){
+  let q=起始,b=await toBlob(c,q);
+  while(b&&b.size>上限&&q>最低){q=Math.round((q-0.08)*100)/100;b=await toBlob(c,q);}
+  return b;
+}
 function compressUpload(file){
   return new Promise((res,rej)=>{
     const img=new Image();
-    img.onload=()=>{
-      const max=1000;let w=img.naturalWidth,h=img.naturalHeight;
-      if(w>=h&&w>max){h=Math.round(h*max/w);w=max;}else if(h>w&&h>max){w=Math.round(w*max/h);h=max;}
-      const c=document.createElement("canvas");c.width=w;c.height=h;
-      c.getContext("2d").drawImage(img,0,0,w,h);
-      c.toBlob(async blob=>{
-        if(!blob){rej(new Error("圖片處理失敗"));return;}
+    img.onload=async()=>{
+      try{
+        const nw=img.naturalWidth,nh=img.naturalHeight;
+        /* 主圖：長邊限制 1200，本來就比較小的不放大 */
+        const s=Math.min(1,IMG_SPEC.長邊/Math.max(nw,nh));
+        const main=await squeeze(drawTo(img,Math.round(nw*s),Math.round(nh*s)),IMG_SPEC);
+        if(!main)throw new Error("圖片處理失敗");
+        /* 縮圖：固定看寬度，卡片是 3/4 的框、object-fit:cover，高度由 CSS 裁 */
+        const ts=Math.min(1,TH_SPEC.寬/nw);
+        const th=await squeeze(drawTo(img,Math.round(nw*ts),Math.round(nh*ts)),TH_SPEC);
+
         const path="up_"+Date.now()+"_"+Math.random().toString(36).slice(2,7)+".jpg";
-        const {error}=await sb.storage.from("products").upload(path,blob,{contentType:"image/jpeg",upsert:true});
+        /* cacheControl 一年：檔名帶時間戳，同一個名字的內容永遠不會變，
+           可以讓瀏覽器與 CDN 放心快取。Supabase 預設只有 3600（一小時），
+           一小時後回訪的客人會把整頁的圖再抓一次，那是純粹白花的流量。 */
+        const opt={contentType:"image/jpeg",upsert:true,cacheControl:"31536000"};
+        const {error}=await sb.storage.from("products").upload(path,main,opt);
         if(error){rej(error);return;}
+        /* 縮圖失敗不擋上架：前台載不到 th_ 開頭的檔會自動退回原圖 */
+        if(th){try{await sb.storage.from("products").upload("th_"+path,th,opt);}catch(e){}}
         res(sb.storage.from("products").getPublicUrl(path).data.publicUrl);
-      },"image/jpeg",0.72);
+      }catch(e){rej(e);}
+      finally{URL.revokeObjectURL(img.src);}
     };
     img.onerror=()=>rej(new Error("無法讀取圖片"));
     img.src=URL.createObjectURL(file);

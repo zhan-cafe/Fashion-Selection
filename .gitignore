@@ -1,0 +1,12 @@
+.env.local
+.env
+node_modules/
+scripts/.搬家紀錄*
+*.bak
+
+# ★ 這是公開 repo（Vercel: fashion-selection.vercel.app）。
+# 下面這些是搬家與維運用的工具，裡面詳細寫著湛海景莊園那個 Supabase 專案的
+# 資料表、bucket、RLS 結構與修補過的漏洞。公開等於給人一份地圖，一律不進版控。
+db/
+scripts/
+流量與圖片_操作說明.md
