@@ -66,10 +66,12 @@ button{border:0;background:transparent;cursor:pointer;padding:0;}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important;}}
 
-/* ── 外框：桌機時置中成一欄 ───────────────────────────────── */
+/* ── 外框：手機是單欄；桌機（≥960px）改成側欄＋多欄商品牆 ── */
 #app{position:fixed;inset:0;max-width:600px;margin:0 auto;
      box-shadow:0 0 0 1px var(--line);background:transparent;}
-@media(min-width:601px){#app{box-shadow:0 0 40px rgba(40,44,34,.1);}}
+@media(min-width:601px) and (max-width:959px){#app{box-shadow:0 0 40px rgba(40,44,34,.1);}}
+#sidebar{display:none;}
+#dCard,#dMedia{display:contents;}   /* 手機版當作不存在，桌機才變成卡片與左欄 */
 
 /* ── 主捲動容器（詳情覆蓋時這個容器不動，捲動位置自然保留）── */
 #scroller{height:100%;overflow-y:auto;overscroll-behavior:contain;
@@ -294,6 +296,94 @@ button{border:0;background:transparent;cursor:pointer;padding:0;}
   padding:10px 0 calc(16px + env(safe-area-inset-bottom,0px));}
 
 /* ── Toast ────────────────────────────────────────────────── */
+/* ══════════════════════════════════════════════════════════════
+   桌機版（≥960px）
+   手機是「一次一件、拇指操作」；桌機螢幕寬、用滑鼠，
+   所以改成「左側常駐篩選 ＋ 右側多欄商品牆」，
+   底部導覽列拿掉（它的三個功能在桌機都已經常駐可見）。
+   DOM 不變，只有月曆／篩選面板會被 layout() 搬進側欄。
+   ══════════════════════════════════════════════════════════════ */
+@media(min-width:960px){
+  #app{position:static;max-width:none;box-shadow:none;}
+  html,body{height:auto;overflow:visible;}
+  #scroller{height:auto;overflow:visible;padding-bottom:60px;}
+
+  #topbar{padding-top:0;}
+  #brandline{max-width:1680px;margin:0 auto;padding:14px 28px 0;}
+  #brandline b{font-size:23px;}
+  #pills{max-width:1680px;margin:0 auto;padding:10px 28px 12px;}
+  .pill{min-width:92px;min-height:64px;}
+  .pill b{font-size:19px;}
+
+  #main{max-width:1680px;margin:0 auto;padding:0 28px;
+        display:grid;grid-template-columns:272px minmax(0,1fr);gap:30px;align-items:start;}
+  #sidebar{display:block;position:sticky;top:132px;max-height:calc(100vh - 150px);
+           overflow-y:auto;padding:18px 0 24px;scrollbar-width:thin;}
+  #sidebar>div{background:var(--surface);border:1px solid var(--line);border-radius:20px;
+               margin-bottom:14px;overflow:hidden;}
+  /* 被搬進來的面板：拿掉 sheet 的圓角與大留白，變成側欄區塊 */
+  #sidebar #calPanel,#sidebar #filPanel{padding:16px 16px 18px;background:transparent;}
+  #sidebar .sheet-x{display:none;}
+  #sidebar .sheet-head{margin-bottom:10px;}
+  #sidebar #filApply{display:none;}       /* 側欄是即時套用的，不需要「查看商品」 */
+  /* 側欄窄，品牌改成自動換行，不要橫向捲（滑鼠捲橫向很難用） */
+  #sidebar #brandRow{flex-wrap:wrap;overflow:visible;max-height:188px;overflow-y:auto;}
+  #sidebar #brandRow button{min-height:40px;padding:0 12px;font-size:13.5px;}
+  #sidebar .cat-grid button{min-height:46px;font-size:14.5px;}
+  #sidebar .gender-row button{min-height:44px;font-size:14px;}
+  #sidebar #searchBox input{min-height:46px;font-size:15px;}
+  #sidebar .cal-day em{font-size:12.5px;}
+  #sidebar .cal-nav button{width:36px;height:36px;}
+  #favBtn{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;
+          min-height:54px;font-size:16px;color:var(--ink);}
+  #favBtn.on{background:var(--accent-soft);color:var(--accent-ink);}
+  #favBtn.on svg{fill:currentColor;}
+
+  #titlebar{padding:22px 0 4px;}
+  #dayTitle{font-size:23px;}
+  #seenLabel{font-size:14px;}
+  #list{padding:16px 0 0;display:grid;gap:22px;
+        grid-template-columns:repeat(2,minmax(0,1fr));}
+  .card{border-radius:22px;}
+  .big{aspect-ratio:3/4;}
+  .thumbs button{height:62px;}
+  .info{padding:12px 16px 16px;}
+  #donewrap{padding:28px 0 40px;}
+  #emptyMsg{margin:28px 0;}
+  #bottomnav{display:none;}
+  /* 捲回頂端：桌機沒有底部導覽，改用右下角浮動鈕 */
+  #toTop{position:fixed;right:26px;bottom:26px;z-index:20;width:52px;height:52px;border-radius:50%;
+         background:var(--accent);color:#fff;font-size:22px;box-shadow:0 6px 20px rgba(40,44,34,.25);}
+  #toTop[hidden]{display:none;}
+}
+@media(min-width:1320px){#list{grid-template-columns:repeat(3,minmax(0,1fr));}}
+@media(min-width:1760px){#main{max-width:1920px;} #list{grid-template-columns:repeat(4,minmax(0,1fr));}}
+@media(max-width:959px){#toTop{display:none;}}
+
+/* 桌機的商品詳情：改成置中的對話框，左圖右文 */
+@media(min-width:960px){
+  #detail{position:fixed;inset:0;z-index:40;background:rgba(31,34,28,.55);
+          backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);
+          display:grid;place-items:center;padding:36px;overflow:auto;}
+  #dCard{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);
+         grid-template-areas:"back back" "media info";
+         width:min(1180px,100%);max-height:calc(100vh - 72px);
+         background:var(--surface);border-radius:26px;overflow:hidden;
+         box-shadow:0 24px 70px rgba(31,34,28,.4);}
+  #dBack{grid-area:back;position:static;background:var(--surface-2);backdrop-filter:none;padding-top:0;}
+  #dMedia{grid-area:media;display:block;overflow-y:auto;background:var(--surface-3);}
+  #dMain{aspect-ratio:auto;height:auto;}
+  #dMain img{width:100%;height:auto;max-height:66vh;object-fit:contain;background:var(--surface-3);}
+  #dThumbs{padding:10px 14px 16px;flex-wrap:wrap;overflow:visible;}
+  #dInfo{grid-area:info;overflow-y:auto;margin-top:0;border-radius:0;box-shadow:none;
+         min-height:0;padding:26px 30px 34px;}
+  #dName{font-size:27px;}
+  /* #app 不再是定位容器，這幾層要自己改成 fixed 才會貼著視窗 */
+  #zoomview{position:fixed;}
+  #toast{position:fixed;bottom:28px;}
+  .sheet{display:none!important;}      /* 桌機用側欄，不會用到底部彈出 */
+}
+
 #toast{position:absolute;left:50%;transform:translateX(-50%);
   bottom:calc(var(--navh) + 16px);z-index:70;
   background:var(--accent);color:#fff;padding:12px 20px;border-radius:999px;
@@ -312,23 +402,37 @@ button{border:0;background:transparent;cursor:pointer;padding:0;}
       <div id="progress"><div id="progressFill"></div></div>
     </header>
 
-    <div id="titlebar">
-      <div id="dayTitle">載入中…</div>
-      <div id="seenLabel"></div>
-    </div>
+    <div id="main">
+      <!-- 桌機版的側欄。月曆與篩選面板會被 layout() 從底部 sheet 搬進來，
+           手機版再搬回去——同一份 DOM，兩種版面，不必維護兩套。 -->
+      <aside id="sidebar">
+        <div id="sideFav"><button id="favBtn">
+          <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 21.3l-1.4-1.3C5.4 15.3 2 12.3 2 8.5 2 5.4 4.4 3 7.5 3c1.7 0 3.4.8 4.5 2.1C13.1 3.8 14.8 3 16.5 3 19.6 3 22 5.4 22 8.5c0 3.8-3.4 6.8-8.6 11.5L12 21.3z"></path></svg>
+          <span>我的收藏</span></button></div>
+        <div id="sideCal"></div>
+        <div id="sideFil"></div>
+      </aside>
 
-    <div id="list"></div>
-    <div id="sentinel" aria-hidden="true" style="height:1px"></div>
-    <div id="emptyMsg" hidden></div>
+      <div id="content">
+        <div id="titlebar">
+          <div id="dayTitle">載入中…</div>
+          <div id="seenLabel"></div>
+        </div>
 
-    <div id="donewrap" hidden>
-      <div id="donecard">
-        <div id="doneMsg"></div>
-        <button class="btn-main" id="btnNextDay"></button>
-        <button class="btn-sub" id="btnTop">↑ 回到最上面</button>
-      </div>
-    </div>
-  </div>
+        <div id="list"></div>
+        <div id="sentinel" aria-hidden="true" style="height:1px"></div>
+        <div id="emptyMsg" hidden></div>
+
+        <div id="donewrap" hidden>
+          <div id="donecard">
+            <div id="doneMsg"></div>
+            <button class="btn-main" id="btnNextDay"></button>
+            <button class="btn-sub" id="btnTop">↑ 回到最上面</button>
+          </div>
+        </div>
+      </div><!-- /#content -->
+    </div><!-- /#main -->
+  </div><!-- /#scroller -->
 
   <nav id="bottomnav">
     <button id="navCal">
@@ -380,10 +484,12 @@ button{border:0;background:transparent;cursor:pointer;padding:0;}
 
   <!-- 商品詳情 -->
   <div id="detail" hidden role="dialog" aria-modal="true" aria-label="商品詳情">
+   <div id="dCard">
     <div id="dBack"><button id="dBackBtn">
       <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#2f6a36" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"></path></svg>
       <span id="dBackLabel">返回</span>
     </button></div>
+    <div id="dMedia">
     <div id="dMain">
       <img id="dImg" alt="">
       <button class="gnav" id="dPrev" aria-label="上一張"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#1f221c" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"></path></svg></button>
@@ -395,6 +501,7 @@ button{border:0;background:transparent;cursor:pointer;padding:0;}
       </span>
     </div>
     <div id="dThumbs"></div>
+    </div><!-- /#dMedia -->
     <div id="dInfo">
       <div id="dId"></div>
       <div id="dBrand"></div>
@@ -407,6 +514,7 @@ button{border:0;background:transparent;cursor:pointer;padding:0;}
         <button id="dCopy">複製商品連結</button>
       </div>
     </div>
+   </div><!-- /#dCard -->
   </div>
 
   <!-- 放大檢視 -->
@@ -420,6 +528,7 @@ button{border:0;background:transparent;cursor:pointer;padding:0;}
     <div id="zHint">雙指可再放大 · 點 ✕ 回到商品</div>
   </div>
 
+  <button id="toTop" hidden aria-label="回到最上面">↑</button>
   <div id="toast" hidden></div>
 </div>
 
@@ -476,6 +585,16 @@ const saveSeen=()=>saveSet("seen_fs",seen);
 
 /* ── 小工具 ────────────────────────────────────────────────── */
 const $=id=>document.getElementById(id);
+
+/* 手機是 #scroller 這個容器在捲；桌機版面改成整頁捲動，捲的是 window。
+   所有跟捲動有關的事都走這三支，兩種版面才不會各寫一套。 */
+const MQ_DESK=window.matchMedia("(min-width:960px)");
+const isDesk=()=>MQ_DESK.matches;
+const scrollEl=()=>isDesk()?document.scrollingElement:$("scroller");
+function scrollToTop(smooth){
+  const e=scrollEl();
+  e.scrollTo?e.scrollTo({top:0,behavior:smooth?"smooth":"auto"}):(e.scrollTop=0);
+}
 const pad2=n=>(n<10?"0":"")+n;
 /* 本機日期（不是 UTC）。舊版用 toISOString() 會讓台灣時間 00:00–08:00 差一天。 */
 function todayStr(){const d=new Date();return d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-"+pad2(d.getDate());}
@@ -589,6 +708,7 @@ function renderPills(){
   if(sel)sel.scrollIntoView({block:"nearest",inline:"center"});
 }
 function renderHead(){
+  layout();     /* 保險：萬一視窗事件沒送出，下一次互動也會把版面接回正確模式 */
   /* 用篩選後的 shown，不是全部 items——篩了分類之後標題也要跟著變 */
   const base=shown.length?shown:visibleItems();
   const total=base.length;
@@ -609,6 +729,7 @@ function renderHead(){
   $("filLabel").textContent=S.filter.cat==="全部"?"篩選":S.filter.cat;
   $("navFil").classList.toggle("on",S.filter.cat!=="全部"||S.filter.gender!=="全部"||S.filter.brand!=="全部"||!!S.q);
   $("navFav").classList.toggle("on",S.mode==="fav");
+  const fb=$("favBtn");if(fb)fb.classList.toggle("on",S.mode==="fav");
   $("navFav").querySelector("svg").setAttribute("fill",S.mode==="fav"?"currentColor":"none");
 }
 
@@ -698,6 +819,9 @@ function renderList(){
   }
   paintChunk();
   renderHead();
+  /* 桌機的篩選面板是常駐的，換日期之後分類／品牌清單要跟著重畫。
+     （renderFilter 不碰 #searchBox，所以不會把使用者正在打的字弄掉） */
+  if(isDesk())renderFilter();
 }
 function updateDone(){
   const wrap=$("donewrap");
@@ -744,11 +868,17 @@ const chunkIO=new IntersectionObserver(es=>{if(es[0].isIntersecting)paintChunk()
 chunkIO.observe($("sentinel"));
 /* 保險絲：捲到離底部 1200px 以內就補一批。
    IntersectionObserver 在某些情況下（哨兵一直留在 rootMargin 內、
-   或一次捲很長一段）不會再回報，光靠它會停住。 */
-$("scroller").addEventListener("scroll",()=>{
-  const el=$("scroller");
+   或一次捲很長一段）不會再回報，光靠它會停住。
+   手機捲 #scroller、桌機捲 window，兩邊都掛。 */
+function onScroll(){
+  const el=scrollEl();
   if(S.rendered<shown.length&&el.scrollHeight-el.scrollTop-el.clientHeight<1200)paintChunk();
-},{passive:true});
+  const t=$("toTop");
+  if(t)t.hidden=!isDesk()||el.scrollTop<700;
+}
+$("scroller").addEventListener("scroll",onScroll,{passive:true});
+window.addEventListener("scroll",onScroll,{passive:true});
+$("toTop").onclick=()=>scrollToTop(true);
 
 /* ══════════════════════════════════════════════════════════════
    切換日期 / 模式
@@ -766,11 +896,12 @@ async function pickDate(d){
   renderPills();
   showSkeleton(2);
   $("dayTitle").textContent=fmtFull(d)+" · 載入中…";
-  $("scroller").scrollTop=0;
+  scrollToTop();
   try{
     S.items=await fetchDay(d);
     renderList();
     const dd=new Date(d+"T00:00:00");S.calY=dd.getFullYear();S.calM=dd.getMonth();
+    if(isDesk())renderCalendar();        /* 側欄月曆要跟著把選取那天改掉 */
     /* 背景補撈當天 images → 縮圖列就地補上 */
     fetchDayImages(d,S.items.map(p=>p.id)).then(fillThumbs);
   }catch(e){
@@ -800,9 +931,9 @@ async function showFavs(){
   S.mode="fav";S.q="";$("search").value="";$("searchClear").hidden=true;
   renderPills();
   const ids=[...favs];
-  if(!ids.length){S.items=[];renderList();$("scroller").scrollTop=0;return;}
+  if(!ids.length){S.items=[];renderList();scrollToTop();return;}
   showSkeleton(2);$("dayTitle").textContent="我的收藏 · 載入中…";
-  $("scroller").scrollTop=0;
+  scrollToTop();
   try{
     const out=[];
     for(let i=0;i<ids.length;i+=200){
@@ -831,7 +962,7 @@ async function runSearch(q){
   S.mode="search";S.q=q;
   renderPills();
   showSkeleton(2);$("dayTitle").textContent="搜尋中…";
-  $("scroller").scrollTop=0;
+  scrollToTop();
   const safe=q.replace(/[%_,()*]/g,"");
   try{
     let rows=[];
@@ -1028,7 +1159,7 @@ document.querySelectorAll("[data-close]").forEach(el=>el.onclick=()=>history.bac
 $("navCal").onclick=()=>openSheet("cal");
 $("navFil").onclick=()=>openSheet("fil");
 $("navFav").onclick=()=>{S.mode==="fav"?pickDate(S.date||S.dates[0]):showFavs();};
-$("btnTop").onclick=()=>$("scroller").scrollTo({top:0,behavior:"smooth"});
+$("btnTop").onclick=()=>scrollToTop(true);
 
 function renderCalendar(){
   if(S.calY==null){const d=new Date();S.calY=d.getFullYear();S.calM=d.getMonth();}
@@ -1099,6 +1230,38 @@ window.addEventListener("keydown",e=>{
 });
 
 /* ══════════════════════════════════════════════════════════════
+   版面切換：手機＝底部 sheet，桌機＝左側常駐側欄
+   月曆與篩選的內容只有一份，靠搬 DOM 在兩種版面之間共用，
+   不必維護兩套 markup，狀態（選到哪天、哪個分類）也不會掉。
+   ══════════════════════════════════════════════════════════════ */
+let lastDesk=null;
+function layout(){
+  const d=isDesk();
+  if(d===lastDesk)return;            /* 沒換模式就什麼都不用做 */
+  lastDesk=d;
+  const cal=$("calPanel"), fil=$("filPanel");
+  if(d){
+    if(cal.parentNode!==$("sideCal"))$("sideCal").appendChild(cal);
+    if(fil.parentNode!==$("sideFil"))$("sideFil").appendChild(fil);
+    closeSheets();
+    $("favBtn").classList.toggle("on",S.mode==="fav");
+    /* 側欄的月曆是常駐的，沒有「開啟 sheet」那個時機可以觸發繪製 */
+    renderCalendar();
+  }else{
+    if(cal.parentNode!==$("sheetCal"))$("sheetCal").appendChild(cal);
+    if(fil.parentNode!==$("sheetFil"))$("sheetFil").appendChild(fil);
+  }
+  renderFilter();
+}
+/* 三道都掛上，哪一道先到都行；layout() 自己判斷模式沒變就直接返回。
+   ResizeObserver 是看「版面真的變了」而不是等視窗事件，最可靠——
+   實測瀏覽器的視窗模擬只改寬度、resize 與 matchMedia change 都不會送出。 */
+MQ_DESK.addEventListener("change",layout);
+let _rt;window.addEventListener("resize",()=>{clearTimeout(_rt);_rt=setTimeout(layout,150);});
+new ResizeObserver(()=>layout()).observe(document.documentElement);
+$("favBtn").onclick=()=>{S.mode==="fav"?pickDate(S.date||S.dates[0]):showFavs();};
+
+/* ══════════════════════════════════════════════════════════════
    啟動
    ══════════════════════════════════════════════════════════════ */
 (function webpTest(){
@@ -1108,6 +1271,7 @@ window.addEventListener("keydown",e=>{
 })();
 
 async function boot(){
+  layout();
   showSkeleton(2);
   /* 先問「最新一天是哪天」，一次請求就能開始顯示商品，不等日期清單 */
   try{
@@ -1130,6 +1294,7 @@ async function boot(){
     S.dateCounts=c;
     S.dates=Object.keys(c).sort().reverse();
     renderPills();renderHead();updateDone();
+    if(isDesk())renderCalendar();
   });
   /* 分享連結 ?p=<id> */
   const pid=new URLSearchParams(location.search).get("p");
