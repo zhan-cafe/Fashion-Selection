@@ -284,6 +284,24 @@ details.pp .ppbox{margin-top:6px;background:var(--surface-3);border-radius:12px;
 .toast button{font-size:13.5px;font-weight:500;color:var(--accent-ink);white-space:nowrap;
   text-decoration:underline;text-underline-offset:3px;}
 
+/* 品牌列的拖曳把手與 ⋯ 選單 */
+.bp-row .grab{cursor:grab;color:var(--ink-5);font-size:13px;user-select:none;flex:none;}
+.bp-row.over{box-shadow:inset 0 2px 0 var(--accent);}
+.bp-row .more{width:26px;height:26px;border-radius:7px;color:var(--ink-4);font-size:15px;flex:none;}
+.bp-row .more:hover{background:var(--neutral-soft);}
+#brandmenu{position:fixed;z-index:86;width:214px;background:var(--surface);
+  border:1px solid var(--line-2);border-radius:14px;padding:6px;
+  box-shadow:0 12px 32px rgba(40,44,34,.2);}
+#brandmenu[hidden]{display:none;}
+#brandmenu .mi{display:block;width:100%;text-align:left;padding:8px 9px;border-radius:9px;font-size:14px;}
+#brandmenu .mi:hover{background:var(--surface-3);}
+#brandmenu .mi.red{color:var(--danger);}
+#brandmenu .mi.red:hover{background:var(--danger-soft);}
+#brandmenu .sep{font-size:11.5px;color:var(--ink-5);margin:8px 6px 4px;}
+.bm-colors{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin:0 4px 4px;}
+.bm-c{height:26px;border-radius:7px;border:1px solid rgba(0,0,0,.08);}
+.bm-c[aria-pressed="true"]{outline:2px solid var(--accent);outline-offset:1px;}
+
 /* ── 手機（<820px）─────────────────────────────────────────── */
 @media(max-width:819px){
   .bar{padding:10px 14px 8px;}
@@ -412,9 +430,10 @@ details.pp .ppbox{margin-top:6px;background:var(--surface-3);border-radius:12px;
   <div id="bpList"></div>
   <div class="bp-foot">
     <button id="bpUnknown">設為未標品牌</button>
-    <p>改名 / 上色 / 排序 → 品牌管理</p>
+    <p>每列右邊的 ⋯ 可以改名 / 合併 / 上色 / 刪除，拖 ⠿ 可排序</p>
   </div>
 </div>
+<div id="brandmenu" hidden></div>
 
 <div id="toasts"></div>
 
@@ -1061,6 +1080,7 @@ document.addEventListener("keydown",e=>{
   }
   if(e.key==="Escape"){
     if(!$("move").hidden)closeMove();
+    else if(!$("brandmenu").hidden)closeBrandMenu();
     else if(!$("brandpop").hidden)closeBrandPop();
   }
 });
@@ -1221,7 +1241,7 @@ function openBrandPop(k,anchor){
   $("bpSearch").value="";renderBpList("");
   setTimeout(()=>$("bpSearch").focus(),30);
 }
-function closeBrandPop(){$("brandpop").hidden=true;brandKey=null;}
+function closeBrandPop(){$("brandpop").hidden=true;closeBrandMenu();brandKey=null;}
 function brandUse(){const m={};products.forEach(p=>{if(p.brand)m[p.brand]=(m[p.brand]||0)+1;});return m;}
 function renderBpList(f){
   const p=byKey(brandKey);
@@ -1230,15 +1250,161 @@ function renderBpList(f){
   const list=brands.filter(b=>!ql||b.name.toLowerCase().includes(ql));
   let h=list.map(b=>{
     const c=BRAND_COLORS[b.color||"default"],ink=BRAND_INK[b.color||"default"];
-    return `<button class="bp-row${p&&p.brand===b.name?" cur":""}" data-b="${esc(b.name)}">
-      <span class="btag" style="background:${c};color:${ink}">${esc(b.name)}</span>
-      <span class="n">${use[b.name]||0}</span></button>`;}).join("");
+    return `<div class="bp-row${p&&p.brand===b.name?" cur":""}" draggable="true" data-id="${b.id}">
+      <span class="grab" title="拖曳排序">⠿</span>
+      <button class="btag" style="background:${c};color:${ink};flex:1;text-align:left;overflow:hidden;text-overflow:ellipsis"
+        data-b="${esc(b.name)}">${esc(b.name)}</button>
+      <span class="n">${use[b.name]||0}</span>
+      <button class="more" data-more="${b.id}" aria-label="更多">⋯</button>
+    </div>`;}).join("");
   const exact=brands.some(b=>b.name.toLowerCase()===ql);
   if(ql&&!exact)h+=`<button class="bp-create" data-new>＋ 新建「${esc(f.trim())}」</button>`;
   $("bpList").innerHTML=h||'<p style="color:var(--ink-5);padding:8px;margin:0">輸入以建立新品牌</p>';
   $("bpList").querySelectorAll("[data-b]").forEach(b=>b.onclick=()=>pickBrand(b.dataset.b));
+  $("bpList").querySelectorAll("[data-more]").forEach(b=>
+    b.onclick=e=>{e.stopPropagation();openBrandMenu(e.currentTarget,+b.dataset.more);});
   const nb=$("bpList").querySelector("[data-new]");
   if(nb)nb.onclick=createBrand;
+  bindBrandDrag();
+}
+
+/* ── 品牌管理：改名（可連帶改商品）／合併／上色／刪除／拖曳排序 ──
+   這幾個動作都會直接寫資料庫，不走「未儲存」那一套。 */
+let bmId=null, bDragId=null;
+const brandById=id=>brands.find(b=>b.id===id);
+
+function openBrandMenu(anchor,id){
+  bmId=id;
+  const b=brandById(id);if(!b)return;
+  const m=$("brandmenu");
+  m.innerHTML=`<button class="mi" data-rename>✎ 重新命名</button>
+    <button class="mi" data-merge>⇄ 合併到其他品牌…</button>
+    <div class="sep">顏色</div>
+    <div class="bm-colors">${Object.keys(BRAND_COLORS).map(c=>
+      `<button class="bm-c" style="background:${BRAND_COLORS[c]}" title="${c}"
+        aria-pressed="${(b.color||"default")===c}" data-color="${c}"></button>`).join("")}</div>
+    <button class="mi red" data-delete>🗑 刪除這個標籤</button>`;
+  m.hidden=false;
+  const r=anchor.getBoundingClientRect();
+  m.style.left=Math.max(8,Math.min(r.left-180,window.innerWidth-222))+"px";
+  m.style.top=Math.min(r.bottom+4,window.innerHeight-280)+"px";
+  m.querySelector("[data-rename]").onclick=()=>renameBrand(id);
+  m.querySelector("[data-merge]").onclick=()=>startMergeBrand(id);
+  m.querySelector("[data-delete]").onclick=()=>deleteBrand(id);
+  m.querySelectorAll("[data-color]").forEach(c=>c.onclick=()=>recolorBrand(id,c.dataset.color));
+}
+function closeBrandMenu(){$("brandmenu").hidden=true;bmId=null;}
+
+/* 全站這個品牌有幾件（不是只算目前載入的那一天） */
+async function brandCount(name){
+  const {count}=await sb.from("fs_products").select("id",{count:"exact",head:true}).eq("brand",name);
+  return count||0;
+}
+/* 把資料庫、記憶體、畫面上的品牌字串一起換掉 */
+function applyBrandRename(from,to){
+  products.forEach(p=>{
+    if(p.brand!==from)return;
+    p.brand=to;
+    if(p._orig&&p._orig.brand===from)p._orig.brand=to;   /* 別讓「放棄變更」把舊名字寫回來 */
+    const el=rowEl(p._key);
+    if(el)el.querySelector("[data-brand]").innerHTML=brandChip(p);
+  });
+}
+async function renameBrand(id){
+  const o=brandById(id);if(!o)return;
+  closeBrandMenu();
+  const input=prompt("重新命名品牌：",o.name);
+  if(input==null)return;
+  const name=input.trim();
+  if(!name||name===o.name)return;
+  const dup=brands.find(b=>b.name.toLowerCase()===name.toLowerCase()&&b.id!==id);
+  if(dup){
+    /* 改成一個已經存在的名字 = 想合併。舊版在這裡直接擋掉，但這正是合併的入口。 */
+    if(confirm("已經有「"+dup.name+"」這個品牌了。\n\n要把「"+o.name+"」的商品全部併進「"+dup.name+"」，\n然後刪掉「"+o.name+"」這個標籤嗎？"))
+      await mergeBrand(id,dup.id);
+    return;
+  }
+  const n=await brandCount(o.name);
+  const cascade=n>0&&confirm("要把這 "+n+" 件「"+o.name+"」的商品一起改成「"+name+"」嗎？\n\n確定＝商品與標籤一起改　取消＝只改標籤名稱");
+  const {error}=await sb.from("fs_brand_options").update({name}).eq("id",id);
+  if(error){toast("改名失敗："+error.message);return;}
+  if(cascade){
+    const r=await sb.from("fs_products").update({brand:name}).eq("brand",o.name);
+    if(r.error){toast("標籤已改名，但商品更新失敗："+r.error.message);}
+    else applyBrandRename(o.name,name);
+  }
+  o.name=name;
+  renderBpList($("bpSearch").value);
+  toast("已改名為「"+name+"」"+(cascade?("，並更新 "+n+" 件商品"):""));
+}
+function startMergeBrand(id){
+  const o=brandById(id);if(!o)return;
+  closeBrandMenu();
+  const others=brands.filter(b=>b.id!==id);
+  if(!others.length){toast("沒有其他品牌可以合併");return;}
+  const m=$("brandmenu");
+  m.innerHTML=`<div class="sep">把「${esc(o.name)}」併進哪一個？</div>`
+    +others.map(b=>`<button class="mi" data-t="${b.id}">${esc(b.name)}</button>`).join("");
+  m.hidden=false;
+  m.querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>mergeBrand(id,+b.dataset.t));
+}
+async function mergeBrand(fromId,toId){
+  const from=brandById(fromId), to=brandById(toId);
+  if(!from||!to)return;
+  closeBrandMenu();
+  const n=await brandCount(from.name);
+  if(!confirm("把「"+from.name+"」的 "+n+" 件商品改成「"+to.name+"」，\n然後刪除「"+from.name+"」這個標籤？\n\n此動作無法復原。"))return;
+  if(n>0){
+    const r=await sb.from("fs_products").update({brand:to.name}).eq("brand",from.name);
+    if(r.error){toast("合併失敗："+r.error.message);return;}
+    applyBrandRename(from.name,to.name);
+  }
+  const d=await sb.from("fs_brand_options").delete().eq("id",fromId);
+  if(d.error){toast("商品已併過去，但標籤刪除失敗："+d.error.message);}
+  brands=brands.filter(b=>b.id!==fromId);
+  renderBpList($("bpSearch").value);
+  toast("已把「"+from.name+"」的 "+n+" 件併進「"+to.name+"」");
+}
+async function deleteBrand(id){
+  const o=brandById(id);if(!o)return;
+  closeBrandMenu();
+  const n=await brandCount(o.name);
+  if(!confirm("刪除品牌標籤「"+o.name+"」？\n\n"+(n?("已經標成這個品牌的 "+n+" 件商品不會變動，只是選項清單少一個。"):"目前沒有商品使用這個品牌。")))return;
+  const {error}=await sb.from("fs_brand_options").delete().eq("id",id);
+  if(error){toast("刪除失敗："+error.message);return;}
+  brands=brands.filter(b=>b.id!==id);
+  renderBpList($("bpSearch").value);
+  toast("已刪除標籤「"+o.name+"」");
+}
+async function recolorBrand(id,c){
+  const o=brandById(id);if(!o)return;
+  o.color=c;closeBrandMenu();
+  renderBpList($("bpSearch").value);
+  products.forEach(p=>{if(p.brand!==o.name)return;
+    const el=rowEl(p._key);if(el)el.querySelector("[data-brand]").innerHTML=brandChip(p);});
+  const {error}=await sb.from("fs_brand_options").update({color:c}).eq("id",id);
+  if(error)toast("顏色儲存失敗："+error.message);
+}
+function bindBrandDrag(){
+  $("bpList").querySelectorAll(".bp-row").forEach(el=>{
+    el.ondragstart=()=>{bDragId=+el.dataset.id;};
+    el.ondragover=e=>{e.preventDefault();el.classList.add("over");};
+    el.ondragleave=()=>el.classList.remove("over");
+    el.ondrop=async e=>{
+      e.preventDefault();el.classList.remove("over");
+      const over=+el.dataset.id;
+      if(bDragId==null||bDragId===over)return;
+      const fi=brands.findIndex(b=>b.id===bDragId), ti=brands.findIndex(b=>b.id===over);
+      if(fi<0||ti<0)return;
+      const [mv]=brands.splice(fi,1);brands.splice(ti,0,mv);
+      brands.forEach((b,i)=>b.sort_order=i);
+      bDragId=null;
+      renderBpList($("bpSearch").value);
+      const {error}=await sb.from("fs_brand_options").upsert(
+        brands.map(b=>({id:b.id,name:b.name,color:b.color||"default",sort_order:b.sort_order})));
+      if(error)toast("排序儲存失敗："+error.message);
+    };
+  });
 }
 function pickBrand(name){
   const k=brandKey;const p=byKey(k);if(!p)return;
@@ -1267,8 +1433,9 @@ $("bpSearch").addEventListener("keydown",e=>{
 });
 $("bpUnknown").onclick=()=>pickBrand("Unknown");
 document.addEventListener("click",e=>{
+  if(!$("brandmenu").hidden&&!e.target.closest("#brandmenu")&&!e.target.closest("[data-more]"))closeBrandMenu();
   if($("brandpop").hidden)return;
-  if(e.target.closest("#brandpop")||e.target.closest("[data-brand]"))return;
+  if(e.target.closest("#brandpop")||e.target.closest("#brandmenu")||e.target.closest("[data-brand]"))return;
   closeBrandPop();
 });
 
