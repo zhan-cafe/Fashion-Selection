@@ -33,7 +33,10 @@
   --shadow-sheet:0 -12px 32px rgba(40,44,34,.2);
   --sans:"Noto Sans TC","Figtree",-apple-system,system-ui,"Segoe UI",sans-serif;
   --display:"Caprasimo",Georgia,serif;
-  --navh:calc(66px + env(safe-area-inset-bottom,0px) + 22px);
+  /* 導覽列高度 = 按鈕 66px + 底部安全區。
+     原本還外加 22px，iPhone 上變成 66+34+22，按鈕下面多出一條空白，
+     看起來沒有貼齊螢幕底部。安全區本身就是要留的距離，不必再加。 */
+  --navh:calc(66px + max(8px, env(safe-area-inset-bottom,0px)));
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 html,body{height:100%;margin:0;overflow:hidden;}
@@ -102,11 +105,15 @@ button{border:0;background:transparent;cursor:pointer;padding:0;}
 .counter{position:absolute;bottom:12px;right:12px;background:rgba(31,34,28,.72);color:#fff;
   font-size:12.5px;padding:4px 12px;border-radius:999px;letter-spacing:.04em;}
 .thumbs{display:flex;gap:7px;padding:10px 14px 0;}
-.thumbs button{flex:1;min-width:0;aspect-ratio:1;max-height:76px;border:2.5px solid rgba(31,34,28,.1);
+/* 高度寫死、圖片用絕對定位填滿。
+   原本是 flex:1 + aspect-ratio:1 + max-height 三個疊在一起——Chrome 算得出來，
+   但 iOS Safari 會把高度算成 aspect-ratio 的值再被 max-height 裁掉，
+   圖片就只露出一截、上面留一大塊灰底。改成不依賴 aspect-ratio 就不會有歧義。 */
+.thumbs button{flex:1;min-width:0;height:76px;position:relative;border:2.5px solid rgba(31,34,28,.1);
   border-radius:14px;background:var(--ph-1);overflow:hidden;display:grid;place-items:center;
   font-size:15px;font-weight:700;color:var(--ink);}
 .thumbs button[aria-pressed="true"]{border-color:var(--accent);}
-.thumbs img{width:100%;height:100%;object-fit:cover;display:block;}
+.thumbs img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;}
 .info{padding:12px 18px 18px;cursor:pointer;}
 .info .brand{font-size:12.5px;letter-spacing:.16em;color:var(--ink-2);text-transform:uppercase;}
 .info .name{font-size:17px;line-height:1.4;margin-top:3px;font-weight:500;}
@@ -143,11 +150,15 @@ button{border:0;background:transparent;cursor:pointer;padding:0;}
 
 /* ── 底部導覽列 ───────────────────────────────────────────── */
 #bottomnav{position:absolute;left:0;right:0;bottom:0;z-index:12;
-  display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:rgba(31,34,28,.1);
-  padding-bottom:calc(22px + env(safe-area-inset-bottom,0px));
+  display:grid;grid-template-columns:1fr 1fr 1fr;
+  /* 底色就是按鈕的顏色，安全區那一條才不會露出別的色塊；
+     格線改用 border-left 畫，不用 gap + 底色的做法。 */
+  background:var(--surface-2);border-top:1px solid rgba(31,34,28,.1);
+  padding-bottom:max(8px, env(safe-area-inset-bottom,0px));
   backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);}
-#bottomnav button{min-height:66px;background:var(--surface-2);color:var(--ink-2);
+#bottomnav button{min-height:66px;background:transparent;color:var(--ink-2);
   font-size:13.5px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;}
+#bottomnav button+button{border-left:1px solid rgba(31,34,28,.1);}
 #bottomnav svg{width:21px;height:21px;}
 #bottomnav button.on{background:var(--beige-deep);color:var(--accent-ink);}
 #navFav.on{background:var(--accent-soft);color:var(--accent-ink);}
@@ -235,10 +246,10 @@ button{border:0;background:transparent;cursor:pointer;padding:0;}
   background:rgba(252,251,248,.9);color:var(--ink-2);font-size:12px;padding:4px 11px;border-radius:999px;}
 #dThumbs{display:flex;gap:8px;overflow-x:auto;padding:12px 14px 4px;scrollbar-width:none;}
 #dThumbs::-webkit-scrollbar{display:none;}
-#dThumbs button{flex:0 0 auto;width:66px;height:66px;border:2.5px solid rgba(31,34,28,.12);
+#dThumbs button{flex:0 0 auto;width:66px;height:66px;position:relative;border:2.5px solid rgba(31,34,28,.12);
   border-radius:14px;overflow:hidden;background:var(--ph-1);opacity:.7;}
 #dThumbs button[aria-pressed="true"]{border-color:var(--accent);opacity:1;}
-#dThumbs img{width:100%;height:100%;object-fit:cover;display:block;}
+#dThumbs img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;}
 /* 文字區要墊一層不透明面。葉紋在這個高度剛好是深綠的葉叢，
    直接把字壓在上面對比不到 4.5:1，40 歲以上的眼睛會很吃力。
    墊成一張由下往上的紙，壁紙仍然從圖片區與邊緣露出來。 */
@@ -558,7 +569,9 @@ function dayDone(d){
 function renderPills(){
   const box=$("pills");
   if(!S.dates.length){box.innerHTML="";return;}
-  box.innerHTML=S.dates.slice(0,45).map(d=>{
+  /* S.dates 是新→舊。膠囊列要「左舊右新」，所以取最近 45 天之後再反轉。
+     最新的那顆在最右邊，進站時 scrollIntoView 會把它捲進畫面。 */
+  box.innerHTML=S.dates.slice(0,45).reverse().map(d=>{
     const on=S.mode==="day"&&d===S.date;
     const done=d===S.date&&dayDone(d);
     return `<button class="pill" aria-pressed="${on}" data-d="${d}">
@@ -612,7 +625,7 @@ function cardHTML(p){
   const multi=p.imgCount>1;
   return `<article class="card" data-id="${p.id}">
     <div class="big" data-open="${p.id}">
-      <img src="${thURL(src)}" data-full="${imgURL(src)}" onerror="${IMG_FALLBACK}" alt="${esc(bLabel(p.brand))}" loading="lazy" decoding="async">
+      <img src="${imgURL(src)}" data-full="${imgURL(src)}" alt="${esc(bLabel(p.brand))}" loading="lazy" decoding="async">
       ${tb?`<span class="badge ${tb.c}">${tb.t}</span>`:""}
       <button class="fav" data-fav="${p.id}" aria-pressed="${faved}" aria-label="收藏">
         <svg viewBox="0 0 24 24" fill="${faved?"#2f6a36":"none"}" stroke="${faved?"#2f6a36":"#fcfbf8"}" stroke-width="1.8"><path d="M12 21.3l-1.4-1.3C5.4 15.3 2 12.3 2 8.5 2 5.4 4.4 3 7.5 3c1.7 0 3.4.8 4.5 2.1C13.1 3.8 14.8 3 16.5 3 19.6 3 22 5.4 22 8.5c0 3.8-3.4 6.8-8.6 11.5L12 21.3z"></path></svg>
@@ -870,7 +883,7 @@ function pickCardImg(id,i){
   const card=document.querySelector('.card[data-id="'+id+'"]');
   if(!card)return;
   const big=card.querySelector(".big img");
-  big.dataset.full=imgURL(imgs[i]);big.src=thURL(imgs[i]);
+  big.dataset.full=imgURL(imgs[i]);big.src=imgURL(imgs[i]);
   const c=card.querySelector(".counter");
   if(c)c.textContent=(i+1)+" / "+p.imgCount;
   card.querySelectorAll("[data-pick]").forEach(b=>b.setAttribute("aria-pressed",+b.dataset.i===i));
