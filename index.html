@@ -221,13 +221,17 @@ button{border:0;background:transparent;cursor:pointer;padding:0;}
 .gender-row button{flex:1;min-height:50px;border:1px solid var(--line-2);border-radius:999px;
   background:var(--surface);color:var(--ink);font-size:15px;}
 .gender-row button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff;}
-#brandRow{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;}
-#brandRow::-webkit-scrollbar{display:none;}
-#brandRow button{flex:0 0 auto;min-height:46px;padding:0 16px;border:1px solid var(--line-2);
-  border-radius:999px;background:var(--surface);color:var(--ink);font-size:14.5px;white-space:nowrap;}
+/* 品牌依字首分行：左邊字母、右邊品牌自動換行，不橫向捲 */
+#brandRow{display:flex;flex-direction:column;gap:8px;}
+.b-row{display:flex;align-items:flex-start;gap:8px;}
+.b-letter{flex:0 0 18px;line-height:44px;text-align:center;font-size:13px;font-weight:700;color:var(--ink-4);}
+.b-chips{flex:1;min-width:0;display:flex;flex-wrap:wrap;gap:8px;}
+#brandRow button{max-width:100%;min-height:44px;padding:0 14px;border:1px solid var(--line-2);
+  border-radius:999px;background:var(--surface);color:var(--ink);font-size:14.5px;}
 #brandRow button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff;}
-#filApply{width:100%;min-height:56px;margin-top:20px;border-radius:999px;
-  background:var(--accent);color:#fff;font-size:16.5px;font-weight:500;}
+/* 品牌清單變長，按鈕要黏在面板底部，不用捲到最下面才按得到 */
+#filApply{position:sticky;bottom:0;width:100%;min-height:56px;margin-top:20px;border-radius:999px;
+  background:var(--accent);color:#fff;font-size:16.5px;font-weight:500;box-shadow:0 6px 18px rgba(31,34,28,.28);}
 
 /* ── 商品詳情（覆蓋層，底層列表不卸載）───────────────────── */
 #detail{position:absolute;inset:0;z-index:40;overflow-y:auto;overscroll-behavior:contain;
@@ -326,9 +330,10 @@ button{border:0;background:transparent;cursor:pointer;padding:0;}
   #sidebar .sheet-x{display:none;}
   #sidebar .sheet-head{margin-bottom:10px;}
   #sidebar #filApply{display:none;}       /* 側欄是即時套用的，不需要「查看商品」 */
-  /* 側欄窄，品牌改成自動換行，不要橫向捲（滑鼠捲橫向很難用） */
-  #sidebar #brandRow{flex-wrap:wrap;overflow:visible;max-height:188px;overflow-y:auto;}
+  /* 側欄窄，品牌清單限高自己捲，不要把下面的區塊推走 */
+  #sidebar #brandRow{max-height:360px;overflow-y:auto;}
   #sidebar #brandRow button{min-height:40px;padding:0 12px;font-size:13.5px;}
+  #sidebar .b-letter{line-height:40px;}
   #sidebar .cat-grid button{min-height:46px;font-size:14.5px;}
   #sidebar .gender-row button{min-height:44px;font-size:14px;}
   #sidebar #searchBox input{min-height:46px;font-size:15px;}
@@ -567,6 +572,7 @@ const S={
   dateCounts:{},        // { 'YYYY-MM-DD': n }
   dates:[],             // 有商品的日期，新→舊
   filter:{cat:"全部",gender:"全部",brand:"全部"},
+  searchState:"",       // loading=還在分批撈 / done=全部撈完 / partial=中途失敗
   q:"",
   mode:"day",           // day | fav | search
   calY:null,calM:null,
@@ -718,7 +724,8 @@ function renderHead(){
     $("seenLabel").textContent="";
     $("progressFill").style.width="0%";
   }else if(S.mode==="search"){
-    $("dayTitle").textContent="搜尋「"+S.q+"」· "+total+" 件";
+    $("dayTitle").textContent="搜尋「"+S.q+"」· "+total+" 件"
+      +(S.searchState==="loading"?"，載入中…":S.searchState==="partial"?"（未載完，請重新搜尋）":"");
     $("seenLabel").textContent="";
     $("progressFill").style.width="0%";
   }else{
@@ -790,6 +797,8 @@ function paintChunk(){
   if(!slice.length){updateDone();return;}
   $("list").insertAdjacentHTML("beforeend",slice.map(cardHTML).join(""));
   S.rendered+=slice.length;
+  /* 搜尋結果可能上千件，縮圖只補畫到的這批，不要一次把全部 images 撈回來 */
+  if(S.mode==="search")loadImagesFor(slice.map(p=>p.id)).then(()=>fillThumbs(slice));
   $("list").querySelectorAll(".card:not([data-w])").forEach(el=>{el.setAttribute("data-w","1");seenIO.observe(el);});
   updateDone();
   /* 自己把畫面填滿，不依賴任何事件。
@@ -812,17 +821,20 @@ function renderList(){
     $("emptyMsg").hidden=false;
     $("emptyMsg").innerHTML=S.mode==="fav"
       ?"還沒有收藏任何商品<br>點大圖右上角的愛心加入收藏"
-      :(S.mode==="search"?("找不到符合「"+esc(S.q)+"」的商品")
+      :(S.mode==="search"
+        ?(S.searchState==="loading"?"載入中…":S.searchState==="partial"?"搜尋失敗，請稍後再試":"找不到符合「"+esc(S.q)+"」的商品")
       :(S.filter.cat!=="全部"||S.filter.gender!=="全部"||S.filter.brand!=="全部"
         ?"沒有符合的商品，試試其他分類":"這天沒有新品"));
-    renderHead();return;
+    renderHead();refreshFilter();return;
   }
   paintChunk();
   renderHead();
-  /* 桌機的篩選面板是常駐的，換日期之後分類／品牌清單要跟著重畫。
-     （renderFilter 不碰 #searchBox，所以不會把使用者正在打的字弄掉） */
-  if(isDesk())renderFilter();
+  refreshFilter();
 }
+/* 桌機的篩選面板是常駐的，手機則是面板開著時在裡面打字搜尋，兩種都要跟著重畫
+   分類／品牌清單與「查看商品」的件數。
+   （renderFilter 不碰 #searchBox，所以不會把使用者正在打的字弄掉） */
+function refreshFilter(){if(isDesk()||!$("sheetFil").hidden)renderFilter();}
 function updateDone(){
   const wrap=$("donewrap");
   if(!shown.length||S.rendered<shown.length||S.mode!=="day"){wrap.hidden=true;return;}
@@ -910,8 +922,8 @@ async function pickDate(d){
     $("emptyMsg").textContent="商品載入失敗，請重新整理或稍後再試。";
   }
 }
-function fillThumbs(){
-  shown.slice(0,S.rendered).forEach(p=>{
+function fillThumbs(list){
+  (list||shown.slice(0,S.rendered)).forEach(p=>{
     const box=document.querySelector('[data-thumbs="'+p.id+'"]');
     if(box)box.innerHTML=thumbsHTML(p);
     const imgs=imgCache.get(p.id);
@@ -954,30 +966,60 @@ async function loadImagesFor(ids){
     }catch(e){}
   }
 }
+/* 搜尋全部日期、不設上限：第一批先顯示，其餘背景分批接在後面。
+   每次搜尋換一個號碼，打字打到一半的舊搜尋看到號碼變了就停，不會蓋掉新結果 */
+const SEARCH_PAGE=500;
+let searchSeq=0;
 async function runSearch(q){
   q=(q||"").trim();
   if(!q){if(S.mode==="search")pickDate(S.date||S.dates[0]);return;}
+  const seq=++searchSeq;
+  const alive=()=>seq===searchSeq&&S.mode==="search";
   closeDetail(true);
   resetFilter();
-  S.mode="search";S.q=q;
+  S.mode="search";S.q=q;S.searchState="loading";
   renderPills();
   showSkeleton(2);$("dayTitle").textContent="搜尋中…";
   scrollToTop();
   const safe=q.replace(/[%_,()*]/g,"");
+  let pinned=[],painted=false;
   try{
-    let rows=[];
     if(/^\d+$/.test(q)){
       const {data}=await sb.from("fs_products").select(LIST_COLS).eq("id",+q);
-      rows=rows.concat(data||[]);
+      if(!alive())return;
+      pinned=data||[];
     }
-    const {data}=await sb.from("fs_products").select(LIST_COLS)
-      .or(`name.ilike.*${safe}*,brand.ilike.*${safe}*,category.ilike.*${safe}*,description.ilike.*${safe}*`)
-      .order("listing_date",{ascending:false}).order("id",{ascending:false}).limit(200);
-    (data||[]).forEach(r=>{if(!rows.some(x=>x.id===r.id))rows.push(r);});
-    S.items=rows.map(mapRow);
-    renderList();
-    loadImagesFor(S.items.map(p=>p.id)).then(fillThumbs);
-  }catch(e){S.items=[];renderList();}
+    const ids=new Set(pinned.map(r=>r.id));
+    for(let from=0;;from+=SEARCH_PAGE){
+      const {data,error}=await sb.from("fs_products").select(LIST_COLS)
+        .or(`name.ilike.*${safe}*,brand.ilike.*${safe}*,category.ilike.*${safe}*,description.ilike.*${safe}*`)
+        .order("listing_date",{ascending:false}).order("id",{ascending:false})
+        .range(from,from+SEARCH_PAGE-1);
+      if(!alive())return;
+      if(error)throw error;
+      const rows=data.filter(r=>!ids.has(r.id));
+      rows.forEach(r=>ids.add(r.id));
+      const last=data.length<SEARCH_PAGE;
+      if(last)S.searchState="done";
+      if(!painted){S.items=pinned.concat(rows).map(mapRow);painted=true;renderList();}
+      else appendSearchItems(rows.map(mapRow));
+      if(last)return;
+    }
+  }catch(e){
+    if(!alive())return;
+    console.error(e);
+    S.searchState="partial";
+    if(painted){renderHead();return;}    /* 已經顯示的留著，標題會註明沒載完 */
+    S.items=pinned.map(mapRow);renderList();
+  }
+}
+function appendSearchItems(items){
+  S.items=S.items.concat(items);
+  if(!S.rendered){renderList();return;}    /* 第一批被篩選條件濾光了，這批可能有符合的 */
+  shown=visibleItems();
+  renderHead();
+  refreshFilter();
+  if($("sentinel").getBoundingClientRect().top-window.innerHeight<900)paintChunk();
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -1193,9 +1235,22 @@ function renderFilter(){
   $("genderRow").querySelectorAll("[data-g]").forEach(b=>b.onclick=()=>{
     S.filter.gender=b.dataset.g;renderFilter();renderList();});
   const bc={};S.items.forEach(p=>bc[p.brand]=(bc[p.brand]||0)+1);
-  const brands=Object.keys(bc).sort((a,b)=>a==="Unknown"?1:b==="Unknown"?-1:bc[b]-bc[a]||a.localeCompare(b));
-  $("brandRow").innerHTML=[`<button data-b="全部" aria-pressed="${S.filter.brand==="全部"}">全部品牌</button>`]
-    .concat(brands.map(b=>`<button data-b="${esc(b)}" aria-pressed="${S.filter.brand===b}">${esc(bLabel(b))}（${bc[b]}）</button>`)).join("");
+  /* A-Z 一行一個字母：大小寫不分（lululemon 在 L）、重音歸原字母（Éclat 在 E）、
+     非英文開頭歸 #，未標品牌固定最後 */
+  const brands=Object.keys(bc).filter(b=>b!=="Unknown").sort((a,b)=>a.localeCompare(b,"en",{sensitivity:"base"}));
+  const groups=new Map();
+  brands.forEach(b=>{
+    const c=b.normalize("NFD").charAt(0).toUpperCase();
+    const k=/[A-Z]/.test(c)?c:"#";
+    if(!groups.has(k))groups.set(k,[]);
+    groups.get(k).push(b);
+  });
+  const keys=[...groups.keys()].sort((a,b)=>a==="#"?1:b==="#"?-1:a.localeCompare(b));
+  const chip=b=>`<button data-b="${esc(b)}" aria-pressed="${S.filter.brand===b}">${esc(bLabel(b))}（${bc[b]}）</button>`;
+  const row=(k,inner)=>`<div class="b-row"><span class="b-letter">${k}</span><div class="b-chips">${inner}</div></div>`;
+  $("brandRow").innerHTML=row("",`<button data-b="全部" aria-pressed="${S.filter.brand==="全部"}">全部品牌</button>`)
+    +keys.map(k=>row(k,groups.get(k).map(chip).join(""))).join("")
+    +(bc.Unknown?row("",chip("Unknown")):"");
   $("brandRow").querySelectorAll("[data-b]").forEach(b=>b.onclick=()=>{
     S.filter.brand=b.dataset.b;renderFilter();renderList();});
   $("filApply").textContent="查看商品（"+visibleItems().length+"）";
