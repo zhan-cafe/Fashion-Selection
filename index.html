@@ -720,15 +720,17 @@ function toast(msg){const t=$("toast");t.textContent=msg;t.hidden=false;
 /* ══════════════════════════════════════════════════════════════
    查詢
    ══════════════════════════════════════════════════════════════ */
+/* 「某一天」的條件：發佈日是那天；發佈日是空的舊商品（10-22 以前）改用上架日 */
+function dayCond(d){return `post_date.eq.${d},and(post_date.is.null,listing_date.eq.${d})`;}
 async function fetchDay(date){
   const {data,error}=await sb.from("fs_products").select(LIST_COLS)
-    .eq("listing_date",date).order("id",{ascending:false}).limit(1000);
+    .or(dayCond(date)).order("id",{ascending:false}).limit(1000);
   if(error)throw error;
   return (data||[]).map(mapRow);
 }
 function mapRow(r){return{
   id:r.id,name:r.name||"",brand:r.brand||"Unknown",category:r.category||"",
-  gender:r.gender||"中性",date:(r.listing_date||"").slice(0,10),
+  gender:r.gender||"中性",date:((r.post_date||r.listing_date)||"").slice(0,10),   // 膠囊、月曆、列表都用發佈日
   post:(r.post_date||r.listing_date||"").slice(0,10),   // 客人看的是發佈日
   colors:Array.isArray(r.colors)?r.colors:[],item:r.item_type||"",
   cover:r.cover||"",imgCount:r.img_count||0,desc:r.desc_short||"",
@@ -742,7 +744,7 @@ async function fetchDayImages(date,ids){
   const need=ids.filter(i=>!imgCache.has(i));
   if(!need.length)return;
   try{
-    const {data}=await sb.from("fs_products").select("id,images").eq("listing_date",date).limit(1000);
+    const {data}=await sb.from("fs_products").select("id,images").or(dayCond(date)).limit(1000);
     (data||[]).forEach(r=>imgCache.set(r.id,Array.isArray(r.images)?r.images:[]));
   }catch(e){}
 }
@@ -760,7 +762,7 @@ async function fetchDetail(id){
   return v;
 }
 
-/* 日期 → 件數。只撈 listing_date 一欄：9 千多筆 gzip 後只有 2KB，
+/* 日期 → 件數（依發佈日）。只撈日期兩欄：9 千多筆 gzip 後只有 2KB，
    日期字串重複性極高，壓縮比很誇張。
    PostgREST 一次最多回 1000 筆，所以要分頁——先問總筆數，再「同時」把所有頁
    一起發出去。排隊一頁一頁等的話要 4 秒，膠囊列會空很久。 */
@@ -771,12 +773,12 @@ async function fetchDateCounts(){
   const pages=Math.min(40,Math.ceil(total/1000))||1;
   const reqs=[];
   for(let i=0;i<pages;i++){
-    reqs.push(sb.from("fs_products").select("listing_date")
-      .order("listing_date",{ascending:false}).range(i*1000,i*1000+999));
+    reqs.push(sb.from("fs_products").select("post_date,listing_date")
+      .order("id",{ascending:true}).range(i*1000,i*1000+999));
   }
   const res=await Promise.all(reqs);
   res.forEach(r=>(r.data||[]).forEach(x=>{
-    const d=(x.listing_date||"").slice(0,10);if(d)counts[d]=(counts[d]||0)+1;}));
+    const d=((x.post_date||x.listing_date)||"").slice(0,10);if(d)counts[d]=(counts[d]||0)+1;}));
   return counts;
 }
 
@@ -1297,7 +1299,7 @@ async function runSearch(q){
     for(let from=0;;from+=SEARCH_PAGE){
       const {data,error}=await sb.from("fs_products").select(LIST_COLS)
         .or(`name.ilike.*${safe}*,brand.ilike.*${safe}*,category.ilike.*${safe}*,description.ilike.*${safe}*`)
-        .order("listing_date",{ascending:false}).order("id",{ascending:false})
+        .order("post_date",{ascending:false,nullsFirst:false}).order("id",{ascending:false})
         .range(from,from+SEARCH_PAGE-1);
       if(!alive())return;
       if(error)throw error;
@@ -1698,11 +1700,12 @@ async function boot(){
   try{
     const t=todayStr();
     let start=t;
-    const {data:todayRow}=await sb.from("fs_products").select("id").eq("listing_date",t).limit(1);
+    const {data:todayRow}=await sb.from("fs_products").select("id").or(dayCond(t)).limit(1);
     if(!todayRow||!todayRow.length){
-      const {data:latest}=await sb.from("fs_products").select("listing_date")
-        .order("listing_date",{ascending:false}).limit(1);
-      start=(latest&&latest[0]&&latest[0].listing_date)?latest[0].listing_date.slice(0,10):t;
+      const {data:latest}=await sb.from("fs_products").select("post_date,listing_date")
+        .order("post_date",{ascending:false,nullsFirst:false}).limit(1);
+      const L=latest&&latest[0];
+      start=L?((L.post_date||L.listing_date)||t).slice(0,10):t;
     }
     await pickDate(start);
   }catch(e){
