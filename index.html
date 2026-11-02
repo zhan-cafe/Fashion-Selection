@@ -79,7 +79,7 @@ button{border:0;background:transparent;cursor:pointer;padding:0;}
 
 /* ── 頂部黏性列：日期膠囊 + 進度條 ────────────────────────── */
 #topbar{position:sticky;top:0;z-index:5;
-  background:rgba(239,237,230,.9);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  background-color:var(--bg);   /* 背景圖由 syncTopbarBg() 依視窗算好，與商品牆同一張 */
   border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top,0px);}
 #brandline{display:flex;align-items:baseline;justify-content:space-between;padding:10px 16px 0;}
 #brandline b{font-family:var(--display);font-size:19px;font-weight:400;letter-spacing:.01em;}
@@ -394,6 +394,90 @@ button{border:0;background:transparent;cursor:pointer;padding:0;}
   background:var(--accent);color:#fff;padding:12px 20px;border-radius:999px;
   font-size:14.5px;box-shadow:0 10px 28px rgba(40,44,34,.25);max-width:88%;text-align:center;}
 #toast[hidden]{display:none;}
+/* ── 篩選（設計版 2026-11-02）─────────────────────── */
+#ranges{display:flex;gap:4px;margin:6px 14px 0;padding:4px;background:#e2e2d6;border-radius:999px;}
+#ranges button{flex:1;min-height:48px;border:0;border-radius:999px;background:transparent;color:var(--ink);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.2;padding:0 4px;font-family:inherit;}
+#ranges button[aria-pressed="true"]{background:var(--accent);color:#fff;}
+.rg-n{font-size:15.5px;font-weight:700;}
+.rg-c{font-size:11.5px;opacity:.85;}
+#filSummary{display:flex;align-items:center;flex-wrap:wrap;gap:7px;padding:6px 10px 8px 14px;
+  background:rgba(235,237,200,.82);border-top:1px solid rgba(75,81,32,.16);}
+#filSummary[hidden]{display:none;}
+.fs-title{display:flex;align-items:center;gap:5px;min-height:44px;padding:0 2px;border:0;background:none;
+  color:#4b5120;font-family:inherit;font-size:14.5px;font-weight:700;}
+.fs-chip{flex-shrink:0;white-space:nowrap;display:flex;align-items:center;gap:6px;min-height:44px;padding:0 10px 0 14px;
+  border:1px solid rgba(75,81,32,.28);border-radius:999px;background:#fcfbf8;color:var(--ink);font-family:inherit;font-size:15px;}
+.fs-clear{margin-left:auto;min-height:44px;padding:0 6px;border:0;background:none;color:#4b5120;font-family:inherit;
+  font-size:14px;text-decoration:underline;text-underline-offset:3px;}
+#navFil{position:relative;}
+#navDot{position:absolute;top:12px;left:calc(50% + 8px);width:10px;height:10px;border-radius:50%;
+  background:var(--accent);box-shadow:0 0 0 2px var(--surface-2);}
+#navDot[hidden]{display:none;}
+.grp-head{display:flex;align-items:center;gap:8px;margin:22px 0 10px;min-height:44px;}
+.grp-head>div{flex:1;min-width:0;}
+.grp-t{font-size:18px;font-weight:700;}
+.grp-s{font-size:13px;color:var(--ink-3);}
+.grp-clr{min-height:44px;padding:0 14px;border:0;border-radius:999px;background:#e2e2d6;color:var(--ink);font-family:inherit;font-size:14px;}
+.grp-clr[hidden]{display:none;}
+.sub-h{font-size:13px;font-weight:700;color:#42453a;margin:14px 0 8px;}
+.zero{opacity:.4;}
+#itemGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;}
+.it{min-height:82px;border:1px solid var(--line-2);border-radius:18px;background:var(--surface);color:var(--ink);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:8px 2px;font-family:inherit;}
+.it svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:2.75;stroke-linecap:round;stroke-linejoin:round;}
+.it-n{font-size:15.5px;font-weight:500;line-height:1.2;}
+.it-c{font-size:12px;line-height:1.1;opacity:.8;}
+.it[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff;}
+#colorRow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;}
+.sw{position:relative;display:flex;flex-direction:column;padding:0;border:0;border-radius:8px;overflow:hidden;
+  background:#fcfbf8;color:var(--ink);font-family:inherit;text-align:left;box-shadow:0 0 0 1px rgba(31,34,28,.1),0 1px 3px rgba(40,44,34,.12);}
+.sw[aria-pressed="true"]{box-shadow:0 0 0 2px var(--accent),0 3px 10px rgba(40,44,34,.16);}
+.sw i{display:block;aspect-ratio:5 / 4;}
+.sw-t{display:flex;flex-direction:column;gap:1px;padding:6px 7px 8px;}
+.sw-n{font-size:15px;font-weight:700;line-height:1.2;}
+.sw-en{font-size:9.5px;letter-spacing:.14em;color:var(--ink-3);line-height:1.3;}
+.sw-c{font-size:11.5px;color:#42453a;margin-top:2px;}
+.sw-badge{position:absolute;top:6px;right:6px;width:22px;height:22px;border-radius:50%;background:var(--accent);
+  display:grid;place-items:center;box-shadow:0 0 0 2px #fcfbf8;}
+.sw-badge svg{display:block;}
+.seg{display:flex;gap:8px;}
+.gbtn{flex:1;min-height:52px;border:1px solid var(--line-2);border-radius:999px;background:var(--surface);color:var(--ink);
+  font-family:inherit;font-size:15.5px;display:flex;align-items:center;justify-content:center;gap:5px;}
+.gbtn .gc{font-size:12px;opacity:.8;}
+.gbtn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff;}
+#brandRow{display:flex;flex-direction:column;gap:10px;}
+#brandRow .bg{display:flex;align-items:flex-start;gap:10px;}
+.bg-l{flex:0 0 auto;width:36px;height:36px;margin-top:5px;border-radius:50%;background:#e2e2d6;color:#4b5120;
+  display:grid;place-items:center;font-family:var(--display);font-size:17px;}
+.bg-l.oth{font-size:11px;font-family:inherit;}
+.bg-c{flex:1;min-width:0;display:flex;flex-wrap:wrap;gap:8px;}
+#brandRow .bchip{min-height:46px;padding:0 15px;border:1px solid var(--line-2);border-radius:999px;background:var(--surface);
+  color:var(--ink);font-family:inherit;font-size:14.5px;display:flex;align-items:center;gap:6px;}
+#brandRow .bchip .bc{font-size:12px;opacity:.75;}
+#brandRow .bchip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff;}
+#filPanel .filter-foot{position:sticky;bottom:0;margin:0 -18px;padding:12px 18px calc(22px + env(safe-area-inset-bottom,0px));
+  background:var(--surface-2);border-top:1px solid rgba(31,34,28,.1);display:flex;gap:10px;}
+#filClear{flex:0 0 auto;min-height:56px;padding:0 20px;border:1px solid var(--line-3);border-radius:999px;
+  background:var(--surface);color:var(--ink);font-family:inherit;font-size:15.5px;}
+#filPanel #filApply{position:static;flex:1;margin:0;min-height:56px;border-radius:999px;background:var(--accent);
+  color:#fff;font-size:16.5px;box-shadow:none;}
+#filPanel #filApply.zero{opacity:1;background:#7a7d6a;}
+.sheet-sub{font-size:13.5px;color:var(--ink-3);margin-top:5px;}
+#emptyMsg.is-card{margin:14px 14px 0;padding:0;text-align:left;}
+.empty-card{background:var(--surface);border-radius:28px;padding:26px 20px 20px;box-shadow:0 3px 10px rgba(40,44,34,.13);}
+.empty-ico{width:72px;height:72px;border-radius:50%;background:#e2e2d6;display:grid;place-items:center;}
+.empty-t{font-size:19px;font-weight:700;line-height:1.45;margin-top:14px;}
+.empty-s{font-size:15px;line-height:1.7;color:#42453a;margin-top:4px;}
+.sugs{display:flex;flex-direction:column;gap:9px;margin-top:14px;}
+.sug{min-height:54px;padding:0 18px;border:1px solid rgba(31,34,28,.16);border-radius:999px;background:var(--surface-2);
+  color:var(--ink);font-family:inherit;font-size:15.5px;display:flex;align-items:center;justify-content:space-between;gap:10px;text-align:left;}
+.sug b{flex:0 0 auto;color:var(--accent-ink);font-weight:700;}
+.sug-main{min-height:56px;margin-top:4px;border:0;border-radius:999px;background:var(--accent);color:#fff;font-family:inherit;font-size:16.5px;}
+.tag-item{background:#ebedc8;color:#4b5120;}
+.tag-col{display:inline-flex;align-items:center;gap:5px;font-size:13px;padding:3px 10px 3px 5px;border-radius:999px;
+  background:var(--surface-2);border:1px solid rgba(31,34,28,.1);color:var(--ink);}
+.tag-col i{width:14px;height:14px;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(31,34,28,.22);display:block;}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -402,9 +486,11 @@ button{border:0;background:transparent;cursor:pointer;padding:0;}
 <div id="app">
   <div id="scroller">
     <header id="topbar">
-      <div id="brandline"><b>Fashion Selection</b><span>每日新品</span></div>
+      <div id="brandline"><b>Fashion Selection</b></div>
+      <div id="ranges" role="group" aria-label="依發佈日快速看"></div>
       <div id="pills"></div>
-      <div id="progress"><div id="progressFill"></div></div>
+      <div id="filSummary" hidden></div>
+  <div id="progress"><div id="progressFill"></div></div>
     </header>
 
     <div id="main">
@@ -450,6 +536,7 @@ button{border:0;background:transparent;cursor:pointer;padding:0;}
     </button>
     <button id="navFil">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round"><path d="M4 6h16M7 12h10M10 18h4"></path></svg>
+      <i id="navDot" hidden></i>
       <span id="filLabel">篩選</span>
     </button>
   </nav>
@@ -472,18 +559,20 @@ button{border:0;background:transparent;cursor:pointer;padding:0;}
   <div class="sheet" id="sheetFil" hidden>
     <div class="scrim" data-close></div>
     <div class="panel" id="filPanel">
-      <div class="sheet-head"><h2>篩選</h2><button class="sheet-x" data-close aria-label="關閉">✕</button></div>
+      <div class="sheet-head"><div><h2>篩選</h2><div class="sheet-sub">條件會疊加：外套＋黑＝黑色外套</div></div><button class="sheet-x" data-close aria-label="關閉">✕</button></div>
       <div id="searchBox">
         <input id="search" type="search" placeholder="搜尋 編號 / 名稱 / 品牌" aria-label="搜尋商品" enterkeyhint="search">
         <button id="searchClear" hidden aria-label="清除">✕</button>
       </div>
-      <div class="sub-label" style="margin-bottom:8px">分類</div>
-      <div class="cat-grid" id="catGrid"></div>
-      <div class="sub-label" style="margin:18px 0 8px">性別</div>
-      <div class="gender-row" id="genderRow"></div>
-      <div class="sub-label" style="margin:18px 0 8px">品牌</div>
+      <div class="grp-head"><div><div class="grp-t">品項</div><div class="grp-s">上衣＝襯衫、T 恤、毛衣、針織</div></div><button class="grp-clr" data-clr="item" hidden>清除</button></div>
+      <div id="itemGrid"></div>
+      <div class="grp-head"><div><div class="grp-t">顏色</div><div class="grp-s">一件衣服有兩個顏色，兩個色都找得到它</div></div><button class="grp-clr" data-clr="color" hidden>清除</button></div>
+      <div id="colorRow"></div>
+      <div class="grp-head"><div><div class="grp-t">性別</div></div><button class="grp-clr" data-clr="gender" hidden>清除</button></div>
+      <div id="genderRow" class="seg"></div>
+      <div class="grp-head"><div><div class="grp-t">品牌</div><div class="grp-s">只列出這段日期有上架的品牌</div></div><button class="grp-clr" data-clr="brand" hidden>清除</button></div>
       <div id="brandRow"></div>
-      <button id="filApply">查看商品</button>
+      <div class="filter-foot"><button id="filClear">全部清除</button><button id="filApply">查看商品</button></div>
     </div>
   </div>
 
@@ -555,7 +644,7 @@ button{border:0;background:transparent;cursor:pointer;padding:0;}
 const SB_URL="https://mhvodyzlwhnsmqmdgwgg.supabase.co";
 const SB_KEY="sb_publishable_RUZz6pkJrwiWHnmdtu6jUA_7safzg1U";
 const sb=window.supabase.createClient(SB_URL,SB_KEY);
-const LIST_COLS="id,name,brand,category,gender,listing_date,cover,img_count,desc_short";
+const LIST_COLS="id,name,brand,category,gender,listing_date,post_date,cover,img_count,desc_short,colors,item_type";
 
 /* 圖片網址：資料庫可能存純檔名，也可能存完整網址，兩種都吃。
    th_ 是列表用的縮圖（約 30KB，原圖 456KB）；載不到會自動退回原圖。 */
@@ -571,15 +660,15 @@ const S={
   items:[],             // 目前顯示的商品
   dateCounts:{},        // { 'YYYY-MM-DD': n }
   dates:[],             // 有商品的日期，新→舊
-  filter:{cat:"全部",gender:"全部",brand:"全部"},
+  filter:{item:null,color:null,gender:null,brand:null},   // 單選，null＝不限；各組之間疊加
   searchState:"",       // loading=還在分批撈 / done=全部撈完 / partial=中途失敗
   q:"",
   mode:"day",           // day | fav | search
   calY:null,calM:null,
   detail:null,          // {item, idx, images[]}
   rendered:0,
+  range:null,           // 快速選項：1 今天 / 7 / 30（依發佈日）；null＝不是區間模式
 };
-const CATS_ORDER=["服飾","包款","配件","鞋款","錶款","珠寶","居家","3C"];
 const CHUNK=8;
 
 /* localStorage：沿用舊版的 key 與格式，使用者的收藏不會不見 */
@@ -640,6 +729,8 @@ async function fetchDay(date){
 function mapRow(r){return{
   id:r.id,name:r.name||"",brand:r.brand||"Unknown",category:r.category||"",
   gender:r.gender||"中性",date:(r.listing_date||"").slice(0,10),
+  post:(r.post_date||r.listing_date||"").slice(0,10),   // 客人看的是發佈日
+  colors:Array.isArray(r.colors)?r.colors:[],item:r.item_type||"",
   cover:r.cover||"",imgCount:r.img_count||0,desc:r.desc_short||"",
   images:null,          // 背景補撈
   imgIdx:0,             // 卡片目前顯示第幾張
@@ -723,6 +814,10 @@ function renderHead(){
     $("dayTitle").textContent="我的收藏 · "+total+" 件";
     $("seenLabel").textContent="";
     $("progressFill").style.width="0%";
+  }else if(S.mode==="range"){
+    $("dayTitle").textContent=(S.range===1?"今天":"近 "+S.range+" 天")+"發佈 · "+total+" 件";
+    $("seenLabel").textContent="";
+    $("progressFill").style.width="0%";
   }else if(S.mode==="search"){
     $("dayTitle").textContent="搜尋「"+S.q+"」· "+total+" 件"
       +(S.searchState==="loading"?"，載入中…":S.searchState==="partial"?"（未載完，請重新搜尋）":"");
@@ -733,8 +828,8 @@ function renderHead(){
     $("seenLabel").textContent=total?("已看 "+nSeen+" / "+total):"";
     $("progressFill").style.width=(total?Math.round(nSeen/total*100):0)+"%";
   }
-  $("filLabel").textContent=S.filter.cat==="全部"?"篩選":S.filter.cat;
-  $("navFil").classList.toggle("on",S.filter.cat!=="全部"||S.filter.gender!=="全部"||S.filter.brand!=="全部"||!!S.q);
+  renderNav();renderSummary();
+
   $("navFav").classList.toggle("on",S.mode==="fav");
   const fb=$("favBtn");if(fb)fb.classList.toggle("on",S.mode==="fav");
   $("navFav").querySelector("svg").setAttribute("fill",S.mode==="fav"?"currentColor":"none");
@@ -743,14 +838,7 @@ function renderHead(){
 /* ══════════════════════════════════════════════════════════════
    渲染：商品卡
    ══════════════════════════════════════════════════════════════ */
-function visibleItems(){
-  let a=S.items;
-  const f=S.filter;
-  if(f.cat!=="全部")a=a.filter(p=>p.category===f.cat);
-  if(f.gender!=="全部")a=a.filter(p=>p.gender===f.gender||p.gender==="中性");
-  if(f.brand!=="全部")a=a.filter(p=>p.brand===f.brand);
-  return a;
-}
+function visibleItems(){return S.items.filter(p=>matchP(p,S.filter));}
 let shown=[];
 function cardHTML(p){
   const tb=tier(p.date);
@@ -771,9 +859,9 @@ function cardHTML(p){
     <div class="info" data-open="${p.id}">
       <div class="brand">${esc(bLabel(p.brand))}</div>
       ${p.name?`<div class="name">${esc(p.name)}</div>`:""}
-      <div class="tags"><span class="tag">${esc(p.category)}</span><span class="tag ${gCls(p.gender)}">${gLabel(p.gender)}</span></div>
+      <div class="tags">${tagsInner(p)}</div>
       ${p.desc?`<div class="desc">${esc(p.desc)}</div>`:""}
-      <div class="meta">編號 ${p.id}　·　上架 ${fmtMD(p.date)}</div>
+      <div class="meta">編號 ${p.id}　·　發佈 ${fmtMD(p.post)}</div>
     </div>
   </article>`;
 }
@@ -798,7 +886,7 @@ function paintChunk(){
   $("list").insertAdjacentHTML("beforeend",slice.map(cardHTML).join(""));
   S.rendered+=slice.length;
   /* 搜尋結果可能上千件，縮圖只補畫到的這批，不要一次把全部 images 撈回來 */
-  if(S.mode==="search")loadImagesFor(slice.map(p=>p.id)).then(()=>fillThumbs(slice));
+  if(S.mode==="search"||S.mode==="range")loadImagesFor(slice.map(p=>p.id)).then(()=>fillThumbs(slice));
   $("list").querySelectorAll(".card:not([data-w])").forEach(el=>{el.setAttribute("data-w","1");seenIO.observe(el);});
   updateDone();
   /* 自己把畫面填滿，不依賴任何事件。
@@ -819,12 +907,16 @@ function renderList(){
   $("donewrap").hidden=true;
   if(!shown.length){
     $("emptyMsg").hidden=false;
-    $("emptyMsg").innerHTML=S.mode==="fav"
-      ?"還沒有收藏任何商品<br>點大圖右上角的愛心加入收藏"
-      :(S.mode==="search"
-        ?(S.searchState==="loading"?"載入中…":S.searchState==="partial"?"搜尋失敗，請稍後再試":"找不到符合「"+esc(S.q)+"」的商品")
-      :(S.filter.cat!=="全部"||S.filter.gender!=="全部"||S.filter.brand!=="全部"
-        ?"沒有符合的商品，試試其他分類":"這天沒有新品"));
+    if(S.mode==="fav"||S.mode==="search"){
+      $("emptyMsg").classList.remove("is-card");
+      $("emptyMsg").innerHTML=S.mode==="fav"
+        ?"還沒有收藏任何商品<br>點大圖右上角的愛心加入收藏"
+        :(S.searchState==="loading"?"載入中…":S.searchState==="partial"?"搜尋失敗，請稍後再試":"找不到符合「"+esc(S.q)+"」的商品");
+    }else if(activeFilter().length){renderEmpty();}
+    else{
+      $("emptyMsg").classList.remove("is-card");
+      $("emptyMsg").innerHTML=S.mode==="range"?"這段時間沒有新品":"這天沒有新品";
+    }
     renderHead();refreshFilter();return;
   }
   paintChunk();
@@ -903,9 +995,9 @@ async function pickDate(d){
   if(!d)return;                       /* 日期清單還沒回來時不要把畫面清空 */
   closeSheets();closeDetail(true);
   if(S.mode!=="day")resetFilter();
-  S.mode="day";S.date=d;S.q="";$("search").value="";$("searchClear").hidden=true;
+  S.mode="day";S.range=null;S.date=d;S.q="";$("search").value="";$("searchClear").hidden=true;
   celebrated=null;
-  renderPills();
+  renderPills();renderRanges();
   showSkeleton(2);
   $("dayTitle").textContent=fmtFull(d)+" · 載入中…";
   scrollToTop();
@@ -922,6 +1014,218 @@ async function pickDate(d){
     $("emptyMsg").textContent="商品載入失敗，請重新整理或稍後再試。";
   }
 }
+/* ══════════════════════════════════════════════════════════════
+   快速選項（依發佈日）：今天／近 7 天／近 30 天
+   發佈日沒有值的舊商品（10-22 以前）退回用上架日判斷。
+   ══════════════════════════════════════════════════════════════ */
+function addDays(iso,n){const d=new Date(iso+"T00:00:00");d.setDate(d.getDate()+n);
+  return d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-"+pad2(d.getDate());}
+/* 發佈日在範圍內；發佈日是空的舊商品（10-22 以前）改用上架日判斷 */
+function rangeCond(from,to){
+  return `and(post_date.gte.${from},post_date.lte.${to}),and(post_date.is.null,listing_date.gte.${from},listing_date.lte.${to})`;
+}
+async function fetchRange(from,to){
+  const out=[];
+  const cond=rangeCond(from,to);
+  for(let i=0;i<20;i++){
+    const {data,error}=await sb.from("fs_products").select(LIST_COLS)
+      .or(cond).order("post_date",{ascending:false}).order("id",{ascending:false})
+      .range(i*1000,i*1000+999);
+    if(error)throw error;
+    out.push(...(data||[]).map(mapRow));
+    if(!data||data.length<1000)break;
+  }
+  return out;
+}
+function renderRanges(){
+  const rc=S.rangeCounts||{};
+  $("ranges").innerHTML=[[1,"今天"],[7,"近 7 天"],[30,"近 30 天"]].map(([n,l])=>
+    `<button data-r="${n}" aria-pressed="${S.mode==="range"&&S.range===n}"><span class="rg-n">${l}</span><span class="rg-c">${rc[n]==null?"…":fmtN(rc[n])+" 件"}</span></button>`).join("");
+  $("ranges").querySelectorAll("[data-r]").forEach(b=>b.onclick=()=>pickRange(+b.dataset.r));
+}
+async function fetchRangeCounts(){
+  const t=todayStr();
+  try{
+    const res=await Promise.all([1,7,30].map(n=>sb.from("fs_products").select("id",{count:"exact",head:true}).or(rangeCond(addDays(t,1-n),t))));
+    S.rangeCounts={1:res[0].count||0,7:res[1].count||0,30:res[2].count||0};
+  }catch(e){S.rangeCounts={};}
+  renderRanges();
+}
+async function pickRange(days,keep){
+  if(!days)return;
+  closeSheets();closeDetail(true);
+  if(!keep&&!(S.mode==="range"&&S.range===days))resetFilter();
+  S.mode="range";S.range=days;S.date=null;S.q="";$("search").value="";$("searchClear").hidden=true;
+  celebrated=null;
+  renderPills();renderRanges();
+  showSkeleton(2);
+  $("dayTitle").textContent=(days===1?"今天":"近 "+days+" 天")+"發佈 · 載入中…";
+  scrollToTop();
+  const t=todayStr();
+  try{
+    const items=await fetchRange(addDays(t,1-days),t);
+    if(S.mode!=="range"||S.range!==days)return;   /* 等待中又換了別的選項就不蓋掉 */
+    S.items=items;
+    renderList();
+  }catch(e){
+    console.error(e);
+    $("list").innerHTML="";$("emptyMsg").hidden=false;
+    $("emptyMsg").textContent="商品載入失敗，請重新整理或稍後再試。";
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   篩選（設計版 2026-11-02）
+   · 各組之間疊加（AND）；同一組內只能選一個，再點一次取消
+   · 件數＝目前範圍、加上「其他組」的條件後，符合該值的件數（排除自己那一組）
+   · 色盤與品項的常數要跟 _工具/色品項.js 的 色盤／品項規則 一致
+   ══════════════════════════════════════════════════════════════ */
+const COLOR_ORDER=["黑","白","米","灰","藍","棕","黃","綠","紅","粉","紫"];
+const COLOR_WIDE=["金銀","多色"];
+const COLOR_EN={黑:"NOIR",白:"BLANC",米:"ÉCRU",灰:"GRIS",藍:"MARINE",棕:"CAMEL",黃:"MOUTARDE",綠:"OLIVE",紅:"BORDEAUX",粉:"ROSE",紫:"LILAS",金銀:"MÉTAL",多色:"MULTI"};
+const COLOR_HEX={黑:"#1f1f1f",白:"#ffffff",米:"#efe6d2",灰:"#9a9a9a",藍:"#2f4a7a",棕:"#7a5230",黃:"#e8c24a",
+  綠:"#5d7a4a",紅:"#b3322e",粉:"#e8a6b5",紫:"#7d5a9e"};
+const ITEM_ORDER=["外套","上衣","背心","洋裝","裙","褲","套裝","鞋","包","帽","配件","飾品","其他"];
+const ITEM_ICON={
+  外套:"M9 3L4 5.5V21h16V5.5L15 3M9 3l3 5.5L15 3M12 8.5V21M4 13h4M16 13h4",
+  上衣:"M20.38 3.46L16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z",
+  背心:"M8 3v1.5a4 4 0 0 0 8 0V3M8 3C8 7 5 8 5 11v10h14V11c0-3-3-4-3-8",
+  洋裝:"M9 2v4.5L7 11 4 21h16l-3-10-2-4.5V2M7 11h10",
+  裙:"M7 4h10l3 16H4zM7 8h10",
+  褲:"M6 3h12l1 18h-5l-2-11-2 11H5zM6 7h12",
+  套裝:"M7 2.5h10L20 5l-2 2v4H6V7L4 5zM12 2.5V11M6.5 13.5h11l1 8h-4.5L12 17l-2 4.5H5.5z",
+  鞋:"M2 18V9h6l2 3 8 2.5a3 3 0 0 1 2.5 3V18zM2 14h18",
+  包:"M2.05 18.57A2 2 0 0 0 4 21h16a2 2 0 0 0 1.95-2.43l-2-9A2 2 0 0 0 18 8H6a2 2 0 0 0-1.95 1.57zM8 11V6a4 4 0 0 1 8 0v5",
+  帽:"M6 16v-4a6 6 0 0 1 12 0v4M2 16.5c0 1.6 4.5 3 10 3s10-1.4 10-3c0-.9-1.5-1.6-4-2M6 14.5c-2.5.4-4 1.1-4 2",
+  配件:"M2 15a4 4 0 1 0 8 0a4 4 0 1 0-8 0M14 15a4 4 0 1 0 8 0a4 4 0 1 0-8 0M10 15a2 2 0 0 1 4 0M2.5 13L5 7c.7-1.3 1.4-2 3-2M21.5 13L19 7c-.7-1.3-1.5-2-3-2",
+  飾品:"M6 3h12l4 6-10 13L2 9zM11 3L8 9l4 13 4-13-3-6M2 9h20",
+  其他:"M5 12a1 1 0 1 0 2 0a1 1 0 1 0-2 0M11 12a1 1 0 1 0 2 0a1 1 0 1 0-2 0M17 12a1 1 0 1 0 2 0a1 1 0 1 0-2 0"
+};
+const LABEL_OF={item:v=>v,color:v=>v,gender:v=>v==="女"?"女款":"男款",brand:v=>bLabel(v)};
+const fmtN=n=>Number(n).toLocaleString("en-US");
+
+/* 一件商品是否符合目前的條件；except 指定要略過的那一組（算件數用） */
+function matchP(p,f,except){
+  if(except!=="item"&&f.item&&p.item!==f.item)return false;
+  if(except!=="color"&&f.color&&!p.colors.includes(f.color))return false;
+  if(except!=="gender"&&f.gender&&!(p.gender===f.gender||p.gender==="中性"))return false;
+  if(except!=="brand"&&f.brand&&p.brand!==f.brand)return false;
+  return true;
+}
+function facetN(except,test){return S.items.filter(p=>matchP(p,S.filter,except)&&test(p)).length;}
+function activeFilter(){return ["item","color","gender","brand"].filter(k=>S.filter[k]);}
+function labelOf(k){return LABEL_OF[k](S.filter[k]);}
+function setF(patch){Object.assign(S.filter,patch);renderFilter();renderList();}
+
+/* 色塊顏色（卡片上的小色點）：金銀、多色用漸層，其餘純色 */
+function colorSwatch(c){
+  if(c==="金銀")return "linear-gradient(90deg,#c9a24e 50%,#b9b9b9 50%)";
+  if(c==="多色")return "conic-gradient(from 0deg at 50% 50%,#b3322e 0 25%,#e8c24a 0 50%,#2f4a7a 0 75%,#5d7a4a 0)";
+  return COLOR_HEX[c]||"#cfcfc4";
+}
+/* 色票卡的材質（麻織紋）：與設計原型的 noise()／tex('linen') 相同 */
+function noiseUrl(fx,fy,oct,v,slope,icpt,seed){
+  const svg="<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n' x='0' y='0' width='100%' height='100%'><feTurbulence type='fractalNoise' baseFrequency='"+fx+" "+fy+"' numOctaves='"+oct+"' seed='"+(seed||4)+"' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 "+v+" 0 0 0 0 "+v+" 0 0 0 0 "+v+" 0 0 0 "+slope+" "+icpt+"'/></filter><rect width='160' height='160' filter='url(%23n)'/></svg>";
+  return 'url("data:image/svg+xml,'+svg.replace(/</g,'%3C').replace(/>/g,'%3E')+'")';
+}
+const LINEN_NOISE=noiseUrl(.75,.75,2,0,.4,-.18);
+const SPECIAL_TEX={
+  /* 金屬：拉絲紋＋一道整面共用的高光（左右同一個角度、同一個位置，光線一致） */
+  /* 金屬：左右共用「同一張」明暗底圖（全寬、同一個角度），金色與銀色只是在上面疊半透明的色調，
+     所以高光的位置、大小、角度完全一致。 */
+  金銀:["repeating-linear-gradient(100deg,rgba(255,255,255,.14) 0 1px,rgba(0,0,0,.05) 1px 3px)",
+    "linear-gradient(160deg,transparent 0 34%,rgba(255,255,255,.7) 46%,transparent 56%)",
+    "linear-gradient(90deg,rgba(201,162,78,.62) 0 50%,rgba(160,160,160,.2) 50%)",
+    "linear-gradient(160deg,#3f3f3f 0%,#b9b9b9 35%,#f2f2f2 48%,#9c9c9c 70%,#4a4a4a 100%)"].join(","),
+  多色:[LINEN_NOISE,"conic-gradient(from 0deg at 50% 50%,#b3322e 0 25%,#e8c24a 0 50%,#2f4a7a 0 75%,#5d7a4a 0)"].join(",")
+};
+function swatchTex(c){
+  if(SPECIAL_TEX[c])return SPECIAL_TEX[c];
+  return [LINEN_NOISE,"repeating-linear-gradient(0deg,rgba(255,255,255,.06) 0 1px,transparent 1px 3px)",
+    "repeating-linear-gradient(90deg,rgba(0,0,0,.06) 0 1px,transparent 1px 3px)",
+    "linear-gradient(150deg,rgba(255,255,255,.1),rgba(0,0,0,.08))",COLOR_HEX[c]||"#cfcfc4"].join(",");
+}
+
+/* 卡片與詳情的標籤內容（品項、顏色、性別） */
+function tagsInner(p){
+  return (p.item?`<span class="tag tag-item">${esc(p.item)}</span>`:"")
+    +p.colors.map(c=>`<span class="tag-col"><i style="background:${colorSwatch(c)}"></i>${esc(c)}</span>`).join("")
+    +`<span class="tag ${gCls(p.gender)}">${gLabel(p.gender)}</span>`;
+}
+/* 導覽列的「篩選」：有條件時顯示件數與綠點 */
+function renderNav(){
+  const n=activeFilter().length+(S.q?1:0);
+  $("filLabel").textContent=n?`篩選（${n}）`:"篩選";
+  $("navFil").classList.toggle("on",n>0);
+  $("navDot").hidden=!n;
+}
+/* 頂部「篩選中」摘要列 */
+function renderSummary(){
+  const ks=activeFilter();const box=$("filSummary");
+  if(!ks.length){box.hidden=true;box.innerHTML="";return;}
+  box.hidden=false;
+  box.innerHTML=`<button class="fs-title" id="fsOpen"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round"><path d="M4 6h16M7 12h10M10 18h4"></path></svg>篩選中</button>`
+    +ks.map(k=>`<button class="fs-chip" data-rm="${k}" aria-label="拿掉 ${esc(labelOf(k))}">${esc(labelOf(k))}<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#4b5120" stroke-width="2.75" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>`).join("")
+    +`<button class="fs-clear" id="fsClear">全部清除</button>`;
+}
+$("filSummary").onclick=e=>{
+  if(e.target.closest("#fsOpen"))return openSheet("fil");
+  if(e.target.closest("#fsClear"))return setF({item:null,color:null,gender:null,brand:null});
+  const b=e.target.closest("[data-rm]");if(b)setF({[b.dataset.rm]:null});
+};
+
+/* 篩選後沒有結果：說清楚找不到什麼，列出有結果的退路（附件數） */
+let emptySeq=0;
+async function renderEmpty(){
+  const el=$("emptyMsg");el.hidden=false;el.classList.add("is-card");
+  const seq=++emptySeq;
+  const ks=activeFilter();
+  const scope=S.mode==="range"?(S.range===1?"今天發佈的":"近 "+S.range+" 天發佈的"):fmtMD(S.date)+" 發佈的";
+  const sumText=ks.map(labelOf).join("・");
+  const sugs=[];
+  ks.forEach(k=>{
+    const c=S.items.filter(p=>matchP(p,S.filter,k)).length;
+    if(!c)return;
+    const keep=ks.filter(x=>x!==k).map(labelOf).join("・");
+    sugs.push({t:keep?`只看「${keep}」`:`拿掉「${labelOf(k)}」`,n:c,patch:{[k]:null}});
+  });
+  el.innerHTML=`<div class="empty-card"><div class="empty-ico"><svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="#4b5120" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4a7 7 0 1 0 0 14a7 7 0 1 0 0-14M21 21l-4.3-4.3"></path></svg></div>`
+    +`<div class="empty-t">${esc(scope)}商品裡，找不到「${esc(sumText)}」</div>`
+    +`<div class="empty-s">可以試試這些，括號是會出現的件數：</div>`
+    +`<div class="sugs" id="sugs"></div></div>`;
+  const draw=list=>{
+    $("sugs").innerHTML=list.map((g,i)=>`<button class="sug" data-sug="${i}"><span>${esc(g.t)}</span><b>${fmtN(g.n)} 件 →</b></button>`).join("")
+      +`<button class="sug-main" id="emptyClear">清除全部篩選</button>`;
+    el._sugs=list;
+  };
+  draw(sugs);
+  /* 近 30 天的退路要去資料庫數（目前只載了這一段），數完再補上一顆 */
+  if(!(S.mode==="range"&&S.range===30)){
+    const c30=await countRange30();
+    if(seq!==emptySeq||!activeFilter().length)return;
+    if(c30)draw(sugs.concat([{t:`改看近 30 天的「${sumText}」`,n:c30,go30:true}]));
+  }
+}
+$("emptyMsg").onclick=e=>{
+  if(e.target.closest("#emptyClear"))return setF({item:null,color:null,gender:null,brand:null});
+  const b=e.target.closest("[data-sug]");if(!b)return;
+  const g=$("emptyMsg")._sugs[+b.dataset.sug];
+  if(g.go30)return pickRange(30,true);
+  setF(g.patch);
+};
+/* 近 30 天、套用目前條件的件數（伺服器數，不撈資料） */
+async function countRange30(){
+  const f=S.filter;
+  if(f.brand==="Unknown")return 0;
+  const t=todayStr();
+  let q=sb.from("fs_products").select("id",{count:"exact",head:true}).or(rangeCond(addDays(t,-29),t));
+  if(f.item)q=q.eq("item_type",f.item);
+  if(f.color)q=q.contains("colors",[f.color]);
+  if(f.gender)q=q.in("gender",f.gender==="女"?["女","中性"]:["男","中性"]);
+  if(f.brand)q=q.eq("brand",f.brand);
+  try{const {count,error}=await q;return error?0:(count||0);}catch(e){return 0;}
+}
+
 function fillThumbs(list){
   (list||shown.slice(0,S.rendered)).forEach(p=>{
     const box=document.querySelector('[data-thumbs="'+p.id+'"]');
@@ -935,7 +1239,7 @@ function fillThumbs(list){
 }
 /* 切到收藏／搜尋時把分類篩選歸零。
    不然會發生「搜尋編號找不到」——其實是前一個分類篩選把它濾掉了。 */
-function resetFilter(){S.filter={cat:"全部",gender:"全部",brand:"全部"};}
+function resetFilter(){S.filter={item:null,color:null,gender:null,brand:null};}
 
 async function showFavs(){
   closeSheets();closeDetail(true);
@@ -1110,11 +1414,11 @@ function paintDetail(){
   $("dId").textContent="編號 "+p.id;
   $("dBrand").textContent=bLabel(p.brand);
   $("dName").textContent=p.name||(p.category+" · "+gLabel(p.gender));
-  $("dTags").innerHTML=`<span class="tag">${esc(p.category)}</span><span class="tag ${gCls(p.gender)}">${gLabel(p.gender)}</span>`;
+  $("dTags").innerHTML=tagsInner(p);
   const txt=p.fullDesc!=null?p.fullDesc:p.desc;
   $("dDesc").textContent=txt||"";
   $("dDesc").hidden=!txt;
-  $("dDate").textContent="上架日期："+fmtMD(p.date);
+  $("dDate").textContent="發佈日期："+fmtMD(p.post);
   paintDetailFav();
 }
 function paintDetailFav(){
@@ -1225,37 +1529,74 @@ function renderCalendar(){
 $("calPrev").onclick=()=>{if(--S.calM<0){S.calM=11;S.calY--;}renderCalendar();};
 $("calNext").onclick=()=>{if(++S.calM>11){S.calM=0;S.calY++;}renderCalendar();};
 
+/* 篩選面板：依目前範圍的商品重畫每一組（件數即時更新） */
 function renderFilter(){
-  const cats=["全部"].concat(CATS_ORDER.filter(c=>S.items.some(p=>p.category===c)));
-  $("catGrid").innerHTML=cats.map(c=>`<button data-cat="${esc(c)}" aria-pressed="${S.filter.cat===c}">${esc(c)}</button>`).join("");
-  $("catGrid").querySelectorAll("[data-cat]").forEach(b=>b.onclick=()=>{
-    S.filter.cat=b.dataset.cat;renderFilter();renderList();});
-  const gs=[["全部","全部"],["女","♀ 女款"],["男","♂ 男款"]];
-  $("genderRow").innerHTML=gs.map(([v,l])=>`<button data-g="${v}" aria-pressed="${S.filter.gender===v}">${l}</button>`).join("");
-  $("genderRow").querySelectorAll("[data-g]").forEach(b=>b.onclick=()=>{
-    S.filter.gender=b.dataset.g;renderFilter();renderList();});
-  const bc={};S.items.forEach(p=>bc[p.brand]=(bc[p.brand]||0)+1);
-  /* A-Z 一行一個字母：大小寫不分（lululemon 在 L）、重音歸原字母（Éclat 在 E）、
-     非英文開頭歸 #，未標品牌固定最後 */
-  const brands=Object.keys(bc).filter(b=>b!=="Unknown").sort((a,b)=>a.localeCompare(b,"en",{sensitivity:"base"}));
+  const f=S.filter;
+  /* 品項：件數 0 的仍顯示（半透明），只有「其他」沒有件數時隱藏 */
+  $("itemGrid").innerHTML=ITEM_ORDER.map(name=>{
+    const c=facetN("item",p=>p.item===name), on=f.item===name;
+    if(name==="其他"&&!c&&!on)return "";
+    return `<button class="it${c||on?"":" zero"}" data-item="${esc(name)}" aria-pressed="${on}"><svg viewBox="0 0 24 24"><path d="${ITEM_ICON[name]}"></path></svg><span class="it-n">${esc(name)}</span><span class="it-c">${fmtN(c)}</span></button>`;
+  }).join("");
+
+  /* 顏色：13 色同一個 4 欄格（金銀、多色排最後）；範圍內出現的未知新色接在後面 */
+  const present=new Set();S.items.forEach(p=>p.colors.forEach(c=>present.add(c)));
+  const unknown=[...present].filter(c=>!COLOR_ORDER.includes(c)&&!COLOR_WIDE.includes(c));
+  const colorBtn=c=>{
+    const n=facetN("color",p=>p.colors.includes(c)), on=f.color===c;
+    const badge=on
+      ?'<span class="sw-badge"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span>'
+      :"";
+    return `<button class="sw${n||on?"":" zero"}" data-color="${esc(c)}" aria-pressed="${on}"><i style="${esc("background:"+swatchTex(c))}"></i><span class="sw-t"><span class="sw-n">${esc(c)}</span><span class="sw-en">${COLOR_EN[c]||""}</span><span class="sw-c">${fmtN(n)} 件</span></span>${badge}</button>`;
+  };
+  $("colorRow").innerHTML=COLOR_ORDER.concat(COLOR_WIDE,unknown).map(colorBtn).join("");
+
+
+  /* 性別：中性款同時計入女款與男款 */
+  const gs=[[null,"全部",facetN("gender",()=>true)],
+    ["女","♀ 女款",facetN("gender",p=>p.gender==="女"||p.gender==="中性")],
+    ["男","♂ 男款",facetN("gender",p=>p.gender==="男"||p.gender==="中性")]];
+  $("genderRow").innerHTML=gs.map(([v,l,n])=>`<button class="gbtn" data-g="${v||"all"}" aria-pressed="${f.gender===v}">${l}<span class="gc">${fmtN(n)}</span></button>`).join("");
+
+  /* 品牌：只列出範圍內有件數、或已選取的；依 A–Z 分組，未標品牌放最後的「其他」 */
+  const all=[...new Set(S.items.map(p=>p.brand))];
+  const bn={};all.forEach(b=>bn[b]=facetN("brand",p=>p.brand===b));
   const groups=new Map();
-  brands.forEach(b=>{
-    const c=b.normalize("NFD").charAt(0).toUpperCase();
-    const k=/[A-Z]/.test(c)?c:"#";
-    if(!groups.has(k))groups.set(k,[]);
-    groups.get(k).push(b);
+  all.filter(b=>bn[b]>0||f.brand===b).forEach(b=>{
+    const c0=b.normalize("NFD").charAt(0).toUpperCase();
+    const L=b==="Unknown"?"其他":(/[A-Z]/.test(c0)?c0:"其他");
+    if(!groups.has(L))groups.set(L,[]);
+    groups.get(L).push(b);
   });
-  const keys=[...groups.keys()].sort((a,b)=>a==="#"?1:b==="#"?-1:a.localeCompare(b));
-  const chip=b=>`<button data-b="${esc(b)}" aria-pressed="${S.filter.brand===b}">${esc(bLabel(b))}（${bc[b]}）</button>`;
-  const row=(k,inner)=>`<div class="b-row"><span class="b-letter">${k}</span><div class="b-chips">${inner}</div></div>`;
-  $("brandRow").innerHTML=row("",`<button data-b="全部" aria-pressed="${S.filter.brand==="全部"}">全部品牌</button>`)
-    +keys.map(k=>row(k,groups.get(k).map(chip).join(""))).join("")
-    +(bc.Unknown?row("",chip("Unknown")):"");
-  $("brandRow").querySelectorAll("[data-b]").forEach(b=>b.onclick=()=>{
-    S.filter.brand=b.dataset.b;renderFilter();renderList();});
-  $("filApply").textContent="查看商品（"+visibleItems().length+"）";
+  const order=[...groups.keys()].sort((a,b)=>a==="其他"?1:b==="其他"?-1:a.localeCompare(b));
+  $("brandRow").innerHTML=order.map(L=>{
+    const list=groups.get(L).sort((a,b)=>a==="Unknown"?1:b==="Unknown"?-1:a.localeCompare(b,"en",{sensitivity:"base"}));
+    return `<div class="bg"><div class="bg-l${L==="其他"?" oth":""}">${L}</div><div class="bg-c">`
+      +list.map(b=>`<button class="bchip" data-b="${esc(b)}" aria-pressed="${f.brand===b}">${esc(bLabel(b))}<span class="bc">${fmtN(bn[b])}</span></button>`).join("")
+      +`</div></div>`;
+  }).join("");
+
+  /* 每一組右邊的「清除」只在那一組有選取時出現 */
+  document.querySelectorAll(".grp-clr").forEach(x=>{x.hidden=!f[x.dataset.clr];});
+
+  /* 底部按鈕：件數為 0 時變灰，文字改為說明 */
+  const n=visibleItems().length, ap=$("filApply");
+  ap.textContent=n?`查看商品（${fmtN(n)}）`:"沒有符合的商品（0）";
+  ap.classList.toggle("zero",!n);
 }
+/* 點擊事件綁在容器上，只綁一次（按鈕每次重畫都會換新，不能逐顆綁） */
+$("itemGrid").onclick=e=>{const b=e.target.closest("[data-item]");if(!b)return;
+  const v=b.dataset.item;setF({item:S.filter.item===v?null:v});};
+$("colorRow").onclick=e=>{const b=e.target.closest("[data-color]");if(!b)return;
+  const v=b.dataset.color;setF({color:S.filter.color===v?null:v});};
+$("genderRow").onclick=e=>{const b=e.target.closest("[data-g]");if(!b)return;
+  setF({gender:b.dataset.g==="all"?null:b.dataset.g});};
+$("brandRow").onclick=e=>{const b=e.target.closest("[data-b]");if(!b)return;
+  const v=b.dataset.b;setF({brand:S.filter.brand===v?null:v});};
+document.querySelectorAll(".grp-clr").forEach(b=>b.onclick=()=>setF({[b.dataset.clr]:null}));
+$("filClear").onclick=()=>setF({item:null,color:null,gender:null,brand:null});
 $("filApply").onclick=()=>history.back();
+
 let qt;
 $("search").addEventListener("input",()=>{
   const v=$("search").value;
@@ -1312,7 +1653,29 @@ function layout(){
    ResizeObserver 是看「版面真的變了」而不是等視窗事件，最可靠——
    實測瀏覽器的視窗模擬只改寬度、resize 與 matchMedia change 都不會送出。 */
 MQ_DESK.addEventListener("change",layout);
-let _rt;window.addEventListener("resize",()=>{clearTimeout(_rt);_rt=setTimeout(layout,150);});
+let _rt;window.addEventListener("resize",()=>{clearTimeout(_rt);_rt=setTimeout(()=>{layout();syncTopbarBg();},150);});
+/* 日期區（#topbar）要跟商品牆（body）看起來是同一張綠葉圖，而且不模糊。
+   做法：讀 body 實際用的背景宣告與圖檔，照視窗大小算出 cover 的尺寸與位置，
+   再套到日期區上。不用 background-attachment:fixed，因為 iPhone Safari 不支援。 */
+const _bgImg=new Image();
+function syncTopbarBg(){
+  const el=$("topbar");if(!el)return;
+  const decl=getComputedStyle(document.body).backgroundImage;
+  const m=decl.match(/url\(["']?([^"')]+)["']?\)/);
+  if(!m)return;
+  const place=(iw,ih)=>{
+    const W=innerWidth,H=innerHeight,sc=Math.max(W/iw,H/ih),w=iw*sc,h=ih*sc;
+    const r=el.getBoundingClientRect();
+    el.style.backgroundImage=decl;
+    el.style.backgroundRepeat="no-repeat";
+    el.style.backgroundSize=w+"px "+h+"px";
+    el.style.backgroundPosition=((W-w)/2-r.left)+"px 0px";
+  };
+  if(_bgImg.src!==m[1]||!_bgImg.naturalWidth){
+    _bgImg.onload=()=>place(_bgImg.naturalWidth,_bgImg.naturalHeight);
+    _bgImg.src=m[1];
+  }else place(_bgImg.naturalWidth,_bgImg.naturalHeight);
+}
 new ResizeObserver(()=>layout()).observe(document.documentElement);
 $("favBtn").onclick=()=>{S.mode==="fav"?pickDate(S.date||S.dates[0]):showFavs();};
 
@@ -1327,6 +1690,9 @@ $("favBtn").onclick=()=>{S.mode==="fav"?pickDate(S.date||S.dates[0]):showFavs();
 
 async function boot(){
   layout();
+  syncTopbarBg();
+  renderRanges();
+  fetchRangeCounts();
   showSkeleton(2);
   /* 先問「最新一天是哪天」，一次請求就能開始顯示商品，不等日期清單 */
   try{
