@@ -69,7 +69,7 @@ button{border:0;background:transparent;cursor:pointer;padding:0;}
 /* ── 外框：手機是單欄；桌機（≥960px）改成側欄＋多欄商品牆 ── */
 #app{position:fixed;inset:0;max-width:600px;margin:0 auto;
      box-shadow:0 0 0 1px var(--line);background:transparent;}
-@media(min-width:601px) and (max-width:959px){#app{box-shadow:0 0 40px rgba(40,44,34,.1);}}
+@media(min-width:601px) and (max-width:767px){#app{box-shadow:0 0 40px rgba(40,44,34,.1);}}
 #sidebar{display:none;}
 #dCard,#dMedia{display:contents;}   /* 手機版當作不存在，桌機才變成卡片與左欄 */
 
@@ -206,7 +206,9 @@ button{border:0;background:transparent;cursor:pointer;padding:0;}
 .cal-day i{position:absolute;top:2px;right:4px;font-size:9px;font-style:normal;}
 
 /* 篩選 */
-#filPanel{padding:18px 18px calc(30px + env(safe-area-inset-bottom,0px));}
+#filPanel{display:flex;flex-direction:column;padding:18px 18px 0;}
+.sheet #filPanel{max-height:calc(100% - 58px);overflow:hidden;}   /* 面板高度不超過螢幕（扣掉頂部留白），內容區才捲得動 */
+.filter-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;margin:0 -18px;padding:0 18px;}
 #searchBox{position:relative;margin-bottom:16px;}
 #searchBox input{width:100%;min-height:52px;padding:0 44px 0 16px;border:1px solid var(--line-3);
   border-radius:999px;background:var(--surface);font-size:16px;}
@@ -307,7 +309,7 @@ button{border:0;background:transparent;cursor:pointer;padding:0;}
    底部導覽列拿掉（它的三個功能在桌機都已經常駐可見）。
    DOM 不變，只有月曆／篩選面板會被 layout() 搬進側欄。
    ══════════════════════════════════════════════════════════════ */
-@media(min-width:960px){
+@media(min-width:768px){
   #app{position:static;max-width:none;box-shadow:none;}
   html,body{height:auto;overflow:visible;}
   #scroller{height:auto;overflow:visible;padding-bottom:60px;}
@@ -361,12 +363,13 @@ button{border:0;background:transparent;cursor:pointer;padding:0;}
          background:var(--accent);color:#fff;font-size:22px;box-shadow:0 6px 20px rgba(40,44,34,.25);}
   #toTop[hidden]{display:none;}
 }
+@media(min-width:768px) and (max-width:999px){#list{grid-template-columns:minmax(0,1fr)!important;}}
 @media(min-width:1320px){#list{grid-template-columns:repeat(3,minmax(0,1fr));}}
 @media(min-width:1760px){#main{max-width:1920px;} #list{grid-template-columns:repeat(4,minmax(0,1fr));}}
-@media(max-width:959px){#toTop{display:none;}}
+@media(max-width:767px){#toTop{display:none;}}
 
 /* 桌機的商品詳情：改成置中的對話框，左圖右文 */
-@media(min-width:960px){
+@media(min-width:768px){
   #detail{position:fixed;inset:0;z-index:40;background:rgba(31,34,28,.55);
           backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);
           display:grid;place-items:center;padding:36px;overflow:auto;}
@@ -456,7 +459,7 @@ button{border:0;background:transparent;cursor:pointer;padding:0;}
   color:var(--ink);font-family:inherit;font-size:14.5px;display:flex;align-items:center;gap:6px;}
 #brandRow .bchip .bc{font-size:12px;opacity:.75;}
 #brandRow .bchip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff;}
-#filPanel .filter-foot{position:sticky;bottom:0;margin:0 -18px;padding:12px 18px calc(22px + env(safe-area-inset-bottom,0px));
+#filPanel .filter-foot{flex:0 0 auto;margin:0 -18px;padding:12px 18px calc(22px + env(safe-area-inset-bottom,0px));
   background:var(--surface-2);border-top:1px solid rgba(31,34,28,.1);display:flex;gap:10px;}
 #filClear{flex:0 0 auto;min-height:56px;padding:0 20px;border:1px solid var(--line-3);border-radius:999px;
   background:var(--surface);color:var(--ink);font-family:inherit;font-size:15.5px;}
@@ -560,6 +563,7 @@ button{border:0;background:transparent;cursor:pointer;padding:0;}
     <div class="scrim" data-close></div>
     <div class="panel" id="filPanel">
       <div class="sheet-head"><div><h2>篩選</h2><div class="sheet-sub">條件會疊加：外套＋黑＝黑色外套</div></div><button class="sheet-x" data-close aria-label="關閉">✕</button></div>
+      <div class="filter-scroll">
       <div id="searchBox">
         <input id="search" type="search" placeholder="搜尋 編號 / 名稱 / 品牌" aria-label="搜尋商品" enterkeyhint="search">
         <button id="searchClear" hidden aria-label="清除">✕</button>
@@ -572,6 +576,7 @@ button{border:0;background:transparent;cursor:pointer;padding:0;}
       <div id="genderRow" class="seg"></div>
       <div class="grp-head"><div><div class="grp-t">品牌</div><div class="grp-s">只列出這段日期有上架的品牌</div></div><button class="grp-clr" data-clr="brand" hidden>清除</button></div>
       <div id="brandRow"></div>
+      </div>
       <div class="filter-foot"><button id="filClear">全部清除</button><button id="filApply">查看商品</button></div>
     </div>
   </div>
@@ -683,7 +688,7 @@ const $=id=>document.getElementById(id);
 
 /* 手機是 #scroller 這個容器在捲；桌機版面改成整頁捲動，捲的是 window。
    所有跟捲動有關的事都走這三支，兩種版面才不會各寫一套。 */
-const MQ_DESK=window.matchMedia("(min-width:960px)");
+const MQ_DESK=window.matchMedia("(min-width:768px)");
 const isDesk=()=>MQ_DESK.matches;
 const scrollEl=()=>isDesk()?document.scrollingElement:$("scroller");
 function scrollToTop(smooth){
