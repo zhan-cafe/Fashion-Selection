@@ -397,6 +397,21 @@ button{border:0;background:transparent;cursor:pointer;padding:0;}
   background:var(--accent);color:#fff;padding:12px 20px;border-radius:999px;
   font-size:14.5px;box-shadow:0 10px 28px rgba(40,44,34,.25);max-width:88%;text-align:center;}
 #toast[hidden]{display:none;}
+/* ── 客人帳號（LINE 登入）─────────────────────── */
+#acctBtn{min-height:40px;margin:-6px 0 0;padding:0 14px;border:1px solid var(--line-3);border-radius:999px;
+  background:var(--surface);color:var(--ink-2);font-size:14px;font-weight:500;white-space:nowrap;}
+#acctBtn.on{color:var(--accent-ink);background:var(--accent-softer);border-color:var(--accent-line);}
+#acctDlg{position:fixed;inset:0;z-index:65;display:flex;align-items:flex-end;justify-content:center;background:rgba(31,34,28,.42);}
+#acctDlg[hidden]{display:none;}
+#acctDlg .box{width:100%;max-width:440px;background:var(--surface);border-radius:28px 28px 0 0;
+  padding:24px 20px calc(20px + env(safe-area-inset-bottom,0px));}
+#acctDlg h2{margin:0 0 8px;font-size:19px;font-weight:700;}
+#acctDlg p{margin:6px 0;font-size:15.5px;line-height:1.75;color:var(--ink-2);}
+#acctDlg p.fine{font-size:13px;line-height:1.7;color:var(--ink-4);}
+#acctDlg a{color:var(--accent);}
+.btn-line{width:100%;min-height:54px;margin-top:16px;border-radius:999px;background:#06c755;color:#fff;font-size:16.5px;font-weight:700;}
+.btn-line[disabled]{opacity:.6;}
+@media(min-width:760px){#acctDlg{align-items:center;}#acctDlg .box{border-radius:28px;}}
 /* ── 篩選（設計版 2026-11-02）─────────────────────── */
 #ranges{display:flex;gap:4px;margin:6px 14px 0;padding:4px;background:#e2e2d6;border-radius:999px;}
 #ranges button{flex:1;min-height:48px;border:0;border-radius:999px;background:transparent;color:var(--ink);
@@ -489,7 +504,7 @@ button{border:0;background:transparent;cursor:pointer;padding:0;}
 <div id="app">
   <div id="scroller">
     <header id="topbar">
-      <div id="brandline"><b>Fashion Selection</b></div>
+      <div id="brandline"><b>Fashion Selection</b><button id="acctBtn" type="button">LINE 登入</button></div>
       <div id="ranges" role="group" aria-label="依發佈日快速看"></div>
       <div id="pills"></div>
       <div id="filSummary" hidden></div>
@@ -543,6 +558,25 @@ button{border:0;background:transparent;cursor:pointer;padding:0;}
       <span id="filLabel">篩選</span>
     </button>
   </nav>
+
+  <!-- 客人帳號（LINE 登入）。不走底部 sheet 的歷史堆疊，桌機手機同一個對話框 -->
+  <div id="acctDlg" hidden role="dialog" aria-modal="true" aria-labelledby="acctTitle">
+    <div class="box">
+      <div id="acctOut">
+        <h2 id="acctTitle">用 LINE 保存你的收藏</h2>
+        <p>登入後，收藏和「看過」的記錄會跟著你，換手機也不會不見，還會標出你還沒看過的新品。</p>
+        <button class="btn-line" id="acctLogin" type="button">用 LINE 登入</button>
+        <p class="fine">登入即表示同意<a href="terms.html" target="_blank" rel="noopener">使用條款</a>與<a href="privacy.html" target="_blank" rel="noopener">隱私權政策</a>。我們只會記錄你的 LINE 名稱、收藏與瀏覽記錄，不會看你的聊天或好友。</p>
+      </div>
+      <div id="acctIn" hidden>
+        <h2>已用 LINE 登入</h2>
+        <p id="acctName"></p>
+        <p>你的收藏和看過記錄會自動保存，換手機再登入一次就會回來。</p>
+        <button class="btn-sub" id="acctLogout" type="button">登出</button>
+      </div>
+      <button class="btn-sub" id="acctClose" type="button">關閉</button>
+    </div>
+  </div>
 
   <!-- 月曆 -->
   <div class="sheet" id="sheetCal" hidden>
@@ -960,7 +994,7 @@ const seenIO=new IntersectionObserver(es=>{
   es.forEach(e=>{
     if(!e.isIntersecting)return;
     const id=+e.target.dataset.id;
-    if(id&&!seen.has(id)){seen.add(id);changed=true;}
+    if(id&&!seen.has(id)){seen.add(id);acctSeen(id);changed=true;}
     seenIO.unobserve(e.target);
   });
   if(changed){saveSeen();renderHead();renderPills();updateDone();maybeCelebrate();}
@@ -1347,7 +1381,7 @@ $("list").addEventListener("click",e=>{
 function toggleFav(id,btn){
   const on=!favs.has(id);
   on?favs.add(id):favs.delete(id);
-  saveFav();
+  saveFav();acctFav(id,on);
   if(btn){
     btn.setAttribute("aria-pressed",on);
     const svg=btn.querySelector("svg");
@@ -1395,7 +1429,8 @@ async function openDetail(id,startIdx){
   $("detail").hidden=false;
   history.pushState({ov:"d"},"","?p="+id);
   paintDetail();
-  if(!seen.has(id)){seen.add(id);saveSeen();renderHead();renderPills();updateDone();maybeCelebrate();}
+  trackView(id);
+  if(!seen.has(id)){seen.add(id);acctSeen(id);saveSeen();renderHead();renderPills();updateDone();maybeCelebrate();}
   const full=await fetchDetail(id);
   if(S.detail&&S.detail.item.id===id){
     if(full.images.length)S.detail.images=full.images;
@@ -1472,6 +1507,7 @@ $("dMain").addEventListener("touchend",e=>{
 },{passive:true});
 function closeDetail(silent){
   if($("detail").hidden)return;
+  endView();
   $("detail").hidden=true;S.detail=null;
   if(!silent&&location.search)history.replaceState({},"",location.pathname);
 }
@@ -1689,6 +1725,174 @@ $("favBtn").onclick=()=>{S.mode==="fav"?pickDate(S.date||S.dates[0]):showFavs();
 /* ══════════════════════════════════════════════════════════════
    啟動
    ══════════════════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════════════
+   客人帳號（LINE 登入）
+   ──────────────────────────────────────────────────────────────
+   · 沒登入：維持原樣，收藏與看過只存在這支手機的 localStorage。
+   · 登入：LIFF 拿 LINE 的 id_token → Edge Function fs-customer 驗證後發自己的 token，
+     收藏／看過／停留記錄同步到雲端。客人身分不走 Supabase Auth（那會變成 authenticated），
+     前端對客人相關的表一個權限都沒有，全部經過這支函式。
+   · 登入後以雲端為準：每次同步把雲端的收藏／看過蓋回本機，再補上還沒送出的變動。
+   · LIFF SDK 只在客人按登入（或登入完跳回來）時才載入，一般訪客不多載一個 byte。
+   ══════════════════════════════════════════════════════════════ */
+const FN_URL=SB_URL+"/functions/v1/fs-customer";
+const LIFF_ID="2012494253-IqG35ftV";
+let acct=null;
+try{acct=JSON.parse(localStorage.getItem("fs_acct")||"null");}catch(e){}
+if(acct&&!acct.token)acct=null;
+const saveAcct=()=>{try{acct?localStorage.setItem("fs_acct",JSON.stringify(acct)):localStorage.removeItem("fs_acct");}catch(e){}};
+/* 還沒送出的變動；送失敗就留著，下次再送 */
+const emptyPend=()=>({favAdd:[],favDel:[],seen:[],events:[]});
+let pend=emptyPend();
+try{const p=JSON.parse(localStorage.getItem("fs_pend")||"null");
+  if(p&&Array.isArray(p.seen)&&Array.isArray(p.favAdd)&&Array.isArray(p.favDel)&&Array.isArray(p.events))pend=p;}catch(e){}
+const savePend=()=>{try{localStorage.setItem("fs_pend",JSON.stringify(pend));}catch(e){}};
+
+async function api(action,body,keep){
+  const r=await fetch(FN_URL,{method:"POST",headers:{"Content-Type":"application/json",apikey:SB_KEY},
+    body:JSON.stringify(Object.assign({action,token:acct&&acct.token},body||{})),keepalive:!!keep});
+  if(r.status===401&&action!=="login"&&acct){acct=null;saveAcct();renderAcct();}   /* token 過期或被撤銷：退回沒登入 */
+  if(!r.ok)throw new Error("api "+r.status);
+  return r.json();
+}
+
+/* ── 同步 ──────────────────────────────────────────────────── */
+let flushT=null,flushing=false;
+function schedFlush(){if(acct){clearTimeout(flushT);flushT=setTimeout(()=>flush(),4000);}}
+async function flush(want,keep){
+  if(!acct||flushing)return;
+  const snap={favAdd:pend.favAdd.slice(0,500),favDel:pend.favDel.slice(0,500),seen:pend.seen.slice(0,500),events:pend.events.slice(0,50)};
+  if(!want&&!snap.favAdd.length&&!snap.favDel.length&&!snap.seen.length&&!snap.events.length)return;
+  flushing=true;
+  try{
+    const st=await api("sync",Object.assign({want:!!want},snap),keep);
+    /* 送出去的是前 N 筆；期間新增的都在後面 */
+    pend.favAdd=pend.favAdd.slice(snap.favAdd.length);pend.favDel=pend.favDel.slice(snap.favDel.length);
+    pend.seen=pend.seen.slice(snap.seen.length);pend.events=pend.events.slice(snap.events.length);
+    savePend();
+    if(st&&Array.isArray(st.favs))applyState(st);
+    if(pend.favAdd.length||pend.favDel.length||pend.seen.length||pend.events.length)schedFlush();
+  }catch(e){}
+  finally{flushing=false;}
+}
+function acctFav(id,on){
+  if(!acct)return;
+  const rm=(a,x)=>{const i=a.indexOf(x);if(i>=0)a.splice(i,1);};
+  rm(pend.favAdd,id);rm(pend.favDel,id);
+  (on?pend.favAdd:pend.favDel).push(id);
+  savePend();schedFlush();
+}
+function acctSeen(id){
+  if(!acct)return;
+  if(!pend.seen.includes(id)){pend.seen.push(id);if(pend.seen.length>3000)pend.seen.shift();savePend();}
+  schedFlush();
+}
+/* 雲端的狀態蓋回本機，再補上還沒送出的變動，免得剛按的愛心被蓋掉 */
+function applyState(st){
+  favs.clear();seen.clear();
+  (st.favs||[]).forEach(i=>favs.add(i));(st.seen||[]).forEach(i=>seen.add(i));
+  pend.favAdd.forEach(i=>favs.add(i));pend.favDel.forEach(i=>favs.delete(i));pend.seen.forEach(i=>seen.add(i));
+  saveFav();saveSeen();
+  if(st.name!=null&&acct&&st.name!==acct.name){acct.name=st.name;saveAcct();renderAcct();}
+  document.querySelectorAll(".fav[data-fav]").forEach(b=>{
+    const on=favs.has(+b.dataset.fav);b.setAttribute("aria-pressed",on);
+    const s=b.querySelector("svg");if(s){s.setAttribute("fill",on?"#2f6a36":"none");s.setAttribute("stroke",on?"#2f6a36":"#fcfbf8");}
+  });
+  if(S.detail)paintDetailFav();
+  if(S.mode==="fav"){showFavs();return;}
+  renderHead();renderPills();updateDone();
+}
+
+/* ── 停留記錄：只算「看得到畫面」的時間，離開／切走就結算一筆 ─────── */
+let vt=null;
+function trackView(id){
+  endView();
+  if(!acct)return;
+  vt={id,startedAt:new Date().toISOString(),acc:0,last:document.visibilityState==="visible"?Date.now():null};
+}
+function commitView(){
+  if(!vt)return;
+  if(vt.last){vt.acc+=Date.now()-vt.last;vt.last=document.visibilityState==="visible"?Date.now():null;}
+  if(acct&&vt.acc>=1500){
+    pend.events.push({kind:"view",product_id:vt.id,started_at:vt.startedAt,duration_ms:Math.min(vt.acc,30*60*1000)});
+    if(pend.events.length>200)pend.events.splice(0,pend.events.length-200);
+    savePend();schedFlush();
+  }
+  vt.acc=0;vt.startedAt=new Date().toISOString();
+}
+function endView(){commitView();vt=null;}
+document.addEventListener("visibilitychange",()=>{
+  if(document.visibilityState==="hidden"){commitView();flush(false,true);}
+  else if(vt)vt.last=Date.now();
+});
+window.addEventListener("pagehide",()=>{commitView();flush(false,true);});
+
+/* ── 登入／登出 ────────────────────────────────────────────── */
+function renderAcct(){
+  const b=$("acctBtn");
+  b.textContent=acct?("👤 "+((acct.name||"已登入").slice(0,6))):"LINE 登入";
+  b.classList.toggle("on",!!acct);
+  $("acctOut").hidden=!!acct;$("acctIn").hidden=!acct;
+  $("acctName").textContent=acct&&acct.name?acct.name:"";
+}
+let liffP=null;
+function loadLiff(){
+  return liffP||(liffP=new Promise((ok,no)=>{
+    const s=document.createElement("script");
+    s.src="https://static.line-scdn.net/liff/edge/2/sdk.js";
+    s.onload=()=>liff.init({liffId:LIFF_ID}).then(ok,e=>{liffP=null;no(e);});
+    s.onerror=()=>{liffP=null;no(new Error("liff sdk"));};
+    document.head.appendChild(s);
+  }));
+}
+function liffLogin(){
+  try{sessionStorage.setItem("fs_login_pending","1");}catch(e){}
+  liff.login({redirectUri:location.origin+location.pathname});
+}
+async function finishLogin(){
+  const dec=liff.getDecodedIDToken&&liff.getDecodedIDToken();
+  if(!liff.getIDToken()||(dec&&dec.exp*1000<Date.now()+60000)){   /* 憑證過期：重新登入一次 */
+    liff.logout();liffLogin();return;
+  }
+  const st=await api("login",{id_token:liff.getIDToken(),favs:[...favs],seen:[...seen]});
+  acct={token:st.token,name:st.name||""};saveAcct();
+  pend=emptyPend();savePend();
+  renderAcct();applyState(st);
+  $("acctDlg").hidden=true;
+  toast("已用 LINE 登入，收藏會自動保存");
+}
+async function startLogin(){
+  const btn=$("acctLogin");btn.disabled=true;btn.textContent="連線 LINE 中…";
+  try{
+    await loadLiff();
+    if(!liff.isLoggedIn()){liffLogin();return;}
+    await finishLogin();
+  }catch(e){console.error(e);toast("登入沒有成功，請稍後再試");}
+  finally{btn.disabled=false;btn.textContent="用 LINE 登入";}
+}
+async function acctLogout(){
+  try{await api("logout");}catch(e){}
+  acct=null;saveAcct();pend=emptyPend();savePend();vt=null;
+  if(liffP)liffP.then(()=>{if(liff.isLoggedIn())liff.logout();}).catch(()=>{});
+  renderAcct();$("acctDlg").hidden=true;toast("已登出");
+}
+$("acctBtn").onclick=()=>{renderAcct();$("acctDlg").hidden=false;};
+$("acctClose").onclick=()=>{$("acctDlg").hidden=true;};
+$("acctDlg").addEventListener("click",e=>{if(e.target===$("acctDlg"))$("acctDlg").hidden=true;});
+$("acctLogin").onclick=startLogin;
+$("acctLogout").onclick=acctLogout;
+async function acctBoot(){
+  renderAcct();
+  let pending=false;
+  try{pending=sessionStorage.getItem("fs_login_pending")==="1";sessionStorage.removeItem("fs_login_pending");}catch(e){}
+  if(pending&&!acct){   /* 從 LINE 登入頁跳回來 */
+    try{await loadLiff();if(liff.isLoggedIn())await finishLogin();}
+    catch(e){console.error(e);toast("登入沒有成功，請稍後再試");}
+    return;
+  }
+  if(acct)flush(true);
+}
+
 (function webpTest(){
   const c=document.createElement("canvas");
   if(!(c.toDataURL&&c.toDataURL("image/webp").indexOf("data:image/webp")===0))
@@ -1733,5 +1937,6 @@ async function boot(){
   }
 }
 boot();
+acctBoot();
 </script>
 </body></html>
