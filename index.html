@@ -1890,7 +1890,16 @@ async function acctBoot(){
     catch(e){console.error(e);toast("登入沒有成功，請稍後再試");}
     return;
   }
-  if(acct)flush(true);
+  if(acct){flush(true);return;}
+  /* 從 LIFF 連結（或 LINE 內建瀏覽器）進來：LINE 已經授權過，直接接手登入，不用客人再按一次 */
+  let tried=false;
+  try{tried=sessionStorage.getItem("fs_auto_try")==="1";}catch(e){}
+  const viaLine=/\sLine\//i.test(navigator.userAgent)||/[?&](liff\.state|liffClientId|liffRedirectUri)=/.test(location.search);
+  if(viaLine&&!tried){
+    try{sessionStorage.setItem("fs_auto_try","1");}catch(e){}
+    try{await loadLiff();if(liff.isLoggedIn())await finishLogin();}
+    catch(e){console.error(e);}
+  }
 }
 
 (function webpTest(){
