@@ -419,6 +419,16 @@ button{border:0;background:transparent;cursor:pointer;padding:0;}
 #ranges button[aria-pressed="true"]{background:var(--accent);color:#fff;}
 .rg-n{font-size:15.5px;font-weight:700;}
 .rg-c{font-size:11.5px;opacity:.85;}
+#dateRng{margin-bottom:6px;}
+.dr-row{display:flex;align-items:center;gap:8px;}
+.dr-row input{flex:1;min-width:0;min-height:48px;padding:0 10px;border:1px solid var(--line-3);border-radius:14px;background:var(--surface);font-size:16px;}
+.dr-row span{color:var(--ink-4);}
+.dr-quick{display:flex;gap:6px;margin-top:8px;}
+.dr-quick button{flex:1;min-height:40px;border:1px solid var(--line-2);border-radius:999px;background:var(--surface);font-size:13.5px;}
+#drApply{width:100%;min-height:48px;margin-top:8px;border-radius:999px;background:var(--accent2-solid);color:var(--accent2-on);font-size:15px;font-weight:500;}
+/* 手機：往下滑收起頂部列、往上滑再出現（不改版面高度，內容不會跳） */
+#topbar{transition:transform .22s ease-out;}
+#topbar.tb-hide{transform:translateY(-100%);}
 #filSummary{display:flex;align-items:center;flex-wrap:wrap;gap:7px;padding:6px 10px 8px 14px;
   background:rgba(235,237,200,.82);border-top:1px solid rgba(75,81,32,.16);}
 #filSummary[hidden]{display:none;}
@@ -602,6 +612,12 @@ button{border:0;background:transparent;cursor:pointer;padding:0;}
         <input id="search" type="search" placeholder="搜尋 編號 / 名稱 / 品牌" aria-label="搜尋商品" enterkeyhint="search">
         <button id="searchClear" hidden aria-label="清除">✕</button>
       </div>
+      <div class="grp-head"><div><div class="grp-t">日期範圍</div><div class="grp-s">依發佈日；品項、顏色、品牌條件會保留</div></div></div>
+      <div id="dateRng">
+        <div class="dr-row"><input type="date" id="drFrom" aria-label="起日"><span>～</span><input type="date" id="drTo" aria-label="迄日"></div>
+        <div class="dr-quick"><button type="button" data-dq="week">本週</button><button type="button" data-dq="lastweek">上週</button><button type="button" data-dq="month">本月</button><button type="button" data-dq="lastmonth">上個月</button></div>
+        <button type="button" id="drApply">套用日期範圍</button>
+      </div>
       <div class="grp-head"><div><div class="grp-t">品項</div><div class="grp-s">上衣＝襯衫、T 恤、毛衣、針織</div></div><button class="grp-clr" data-clr="item" hidden>清除</button></div>
       <div id="itemGrid"></div>
       <div class="grp-head"><div><div class="grp-t">顏色</div><div class="grp-s">一件衣服有兩個顏色，兩個色都找得到它</div></div><button class="grp-clr" data-clr="color" hidden>清除</button></div>
@@ -706,6 +722,7 @@ const S={
   calY:null,calM:null,
   detail:null,          // {item, idx, images[]}
   rendered:0,
+  rFrom:null,rTo:null,  // 自訂日期範圍（range=0 時使用）
   range:null,           // 快速選項：1 今天 / 7 / 30（依發佈日）；null＝不是區間模式
 };
 const CHUNK=8;
@@ -856,7 +873,7 @@ function renderHead(){
     $("seenLabel").textContent="";
     $("progressFill").style.width="0%";
   }else if(S.mode==="range"){
-    $("dayTitle").textContent=(S.range===1?"今天":"近 "+S.range+" 天")+"發佈 · "+total+" 件";
+    $("dayTitle").textContent=rangeText()+"發佈 · "+total+" 件";
     $("seenLabel").textContent="";
     $("progressFill").style.width="0%";
   }else if(S.mode==="search"){
@@ -1036,7 +1053,7 @@ async function pickDate(d){
   if(!d)return;                       /* 日期清單還沒回來時不要把畫面清空 */
   closeSheets();closeDetail(true);
   if(S.mode!=="day")resetFilter();
-  S.mode="day";S.range=null;S.date=d;S.q="";$("search").value="";$("searchClear").hidden=true;
+  S.mode="day";S.range=null;S.rFrom=S.rTo=null;S.date=d;S.q="";$("search").value="";$("searchClear").hidden=true;
   celebrated=null;
   renderPills();renderRanges();
   showSkeleton(2);
@@ -1081,7 +1098,7 @@ async function fetchRange(from,to){
 function renderRanges(){
   const rc=S.rangeCounts||{};
   $("ranges").innerHTML=[[1,"今天"],[7,"近 7 天"],[30,"近 30 天"]].map(([n,l])=>
-    `<button data-r="${n}" aria-pressed="${S.mode==="range"&&S.range===n}"><span class="rg-n">${l}</span><span class="rg-c">${rc[n]==null?"…":fmtN(rc[n])+" 件"}</span></button>`).join("");
+    `<button data-r="${n}" aria-pressed="${S.mode==="range"&&!S.rFrom&&S.range===n}"><span class="rg-n">${l}</span><span class="rg-c">${rc[n]==null?"…":fmtN(rc[n])+" 件"}</span></button>`).join("");
   $("ranges").querySelectorAll("[data-r]").forEach(b=>b.onclick=()=>pickRange(+b.dataset.r));
 }
 async function fetchRangeCounts(){
@@ -1092,20 +1109,33 @@ async function fetchRangeCounts(){
   }catch(e){S.rangeCounts={};}
   renderRanges();
 }
-async function pickRange(days,keep){
-  if(!days)return;
+function rangeText(){
+  if(S.rFrom)return S.rFrom===S.rTo?fmtMD(S.rFrom):fmtMD(S.rFrom)+"～"+fmtMD(S.rTo);
+  return S.range===1?"今天":"近 "+S.range+" 天";
+}
+/* 自訂日期範圍：保留目前的品項／顏色／品牌條件（才能查「這段時間的 Prada」） */
+function pickCustom(from,to){
+  if(!from||!to)return;
+  if(from>to)[from,to]=[to,from];
+  const t=todayStr();if(to>t)to=t;
+  if(from>to)from=to;
+  pickRange(0,true,{from,to});
+}
+async function pickRange(days,keep,custom){
+  if(!days&&!custom)return;
   closeSheets();closeDetail(true);
-  if(!keep&&!(S.mode==="range"&&S.range===days))resetFilter();
-  S.mode="range";S.range=days;S.date=null;S.q="";$("search").value="";$("searchClear").hidden=true;
+  if(!keep&&!custom&&!(S.mode==="range"&&!S.rFrom&&S.range===days))resetFilter();
+  S.mode="range";S.range=days||0;S.rFrom=custom?custom.from:null;S.rTo=custom?custom.to:null;S.date=null;S.q="";$("search").value="";$("searchClear").hidden=true;
   celebrated=null;
   renderPills();renderRanges();
   showSkeleton(2);
-  $("dayTitle").textContent=(days===1?"今天":"近 "+days+" 天")+"發佈 · 載入中…";
+  $("dayTitle").textContent=rangeText()+"發佈 · 載入中…";
   scrollToTop();
   const t=todayStr();
+  const mf=S.rFrom,mt=S.rTo;
   try{
-    const items=await fetchRange(addDays(t,1-days),t);
-    if(S.mode!=="range"||S.range!==days)return;   /* 等待中又換了別的選項就不蓋掉 */
+    const items=await fetchRange(custom?custom.from:addDays(t,1-days),custom?custom.to:t);
+    if(S.mode!=="range"||S.range!==(days||0)||S.rFrom!==mf||S.rTo!==mt)return;   /* 等待中又換了別的選項就不蓋掉 */
     S.items=items;
     renderList();
   }catch(e){
@@ -1221,7 +1251,7 @@ async function renderEmpty(){
   const el=$("emptyMsg");el.hidden=false;el.classList.add("is-card");
   const seq=++emptySeq;
   const ks=activeFilter();
-  const scope=S.mode==="range"?(S.range===1?"今天發佈的":"近 "+S.range+" 天發佈的"):fmtMD(S.date)+" 發佈的";
+  const scope=S.mode==="range"?rangeText()+"發佈的":fmtMD(S.date)+" 發佈的";
   const sumText=ks.map(labelOf).join("・");
   const sugs=[];
   ks.forEach(k=>{
@@ -1241,7 +1271,7 @@ async function renderEmpty(){
   };
   draw(sugs);
   /* 近 30 天的退路要去資料庫數（目前只載了這一段），數完再補上一顆 */
-  if(!(S.mode==="range"&&S.range===30)){
+  if(!(S.mode==="range"&&!S.rFrom&&S.range===30)){
     const c30=await countRange30();
     if(seq!==emptySeq||!activeFilter().length)return;
     if(c30)draw(sugs.concat([{t:`改看近 30 天的「${sumText}」`,n:c30,go30:true}]));
@@ -1540,7 +1570,7 @@ $("zClose").onclick=()=>history.back();
 function openSheet(which){
   closeSheets();
   if(which==="cal"){renderCalendar();$("sheetCal").hidden=false;}
-  else{renderFilter();$("sheetFil").hidden=false;}
+  else{renderFilter();dr_sync();$("sheetFil").hidden=false;}
   history.pushState({ov:"s"},"");
 }
 function closeSheets(){$("sheetCal").hidden=true;$("sheetFil").hidden=true;}
@@ -1639,6 +1669,39 @@ $("brandRow").onclick=e=>{const b=e.target.closest("[data-b]");if(!b)return;
 document.querySelectorAll(".grp-clr").forEach(b=>b.onclick=()=>setF({[b.dataset.clr]:null}));
 $("filClear").onclick=()=>setF({item:null,color:null,gender:null,brand:null});
 $("filApply").onclick=()=>history.back();
+
+function dr_iso(d){return d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-"+pad2(d.getDate());}
+function dr_sync(){
+  $("drFrom").max=$("drTo").max=todayStr();
+  if(S.mode==="range"&&S.rFrom){$("drFrom").value=S.rFrom;$("drTo").value=S.rTo;}
+}
+$("drApply").onclick=()=>{
+  const a=$("drFrom").value,b=$("drTo").value;
+  if(!a&&!b)return toast("請先選日期");
+  pickCustom(a||b,b||a);
+};
+$("dateRng").addEventListener("click",e=>{
+  const q=e.target.closest("[data-dq]");if(!q)return;
+  const t=new Date(todayStr()+"T00:00:00"),dow=(t.getDay()+6)%7;   /* 週一為一週起點 */
+  let a,b;
+  if(q.dataset.dq==="week"){a=new Date(t);a.setDate(t.getDate()-dow);b=t;}
+  else if(q.dataset.dq==="lastweek"){a=new Date(t);a.setDate(t.getDate()-dow-7);b=new Date(a);b.setDate(a.getDate()+6);}
+  else if(q.dataset.dq==="month"){a=new Date(t.getFullYear(),t.getMonth(),1);b=t;}
+  else{a=new Date(t.getFullYear(),t.getMonth()-1,1);b=new Date(t.getFullYear(),t.getMonth(),0);}
+  $("drFrom").value=dr_iso(a);$("drTo").value=dr_iso(b);
+  pickCustom(dr_iso(a),dr_iso(b));
+});
+dr_sync();
+
+/* 手機：往下滑收起頂部列，往上滑（或回到最上面）再出現 */
+let _lastY=0;
+$("scroller").addEventListener("scroll",()=>{
+  if(isDesk())return;
+  const y=$("scroller").scrollTop,tb=$("topbar");
+  if(y<80||y<_lastY-6)tb.classList.remove("tb-hide");
+  else if(y>_lastY+6)tb.classList.add("tb-hide");
+  _lastY=y;
+},{passive:true});
 
 let qt;
 $("search").addEventListener("input",()=>{
