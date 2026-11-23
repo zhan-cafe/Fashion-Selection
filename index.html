@@ -163,9 +163,9 @@ button{border:0;background:transparent;cursor:pointer;padding:0;}
   /* 底色就是按鈕的顏色，安全區那一條才不會露出別的色塊；
      格線改用 border-left 畫，不用 gap + 底色的做法。 */
   background:var(--surface-2);border-top:1px solid rgba(31,34,28,.1);
-  padding-bottom:max(8px, env(safe-area-inset-bottom,0px));
+  padding-bottom:0;
   backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);}
-#bottomnav button{min-height:66px;background:transparent;color:var(--ink-2);
+#bottomnav button{min-height:var(--navh);padding-bottom:max(8px, env(safe-area-inset-bottom,0px));box-sizing:border-box;background:transparent;color:var(--ink-2);
   font-size:13.5px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;}
 #bottomnav button+button{border-left:1px solid rgba(31,34,28,.1);}
 #bottomnav svg{width:21px;height:21px;}
@@ -413,7 +413,7 @@ button{border:0;background:transparent;cursor:pointer;padding:0;}
 .btn-line[disabled]{opacity:.6;}
 @media(min-width:760px){#acctDlg{align-items:center;}#acctDlg .box{border-radius:28px;}}
 /* ── 篩選（設計版 2026-11-02）─────────────────────── */
-#ranges{display:flex;gap:4px;margin:6px 14px 0;padding:4px;background:#e2e2d6;border-radius:999px;}
+#ranges{display:flex;gap:4px;margin:0 0 10px;padding:4px;background:#e2e2d6;border-radius:999px;}
 #ranges button{flex:1;min-height:48px;border:0;border-radius:999px;background:transparent;color:var(--ink);
   display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.2;padding:0 4px;font-family:inherit;}
 #ranges button[aria-pressed="true"]{background:var(--accent);color:#fff;}
@@ -426,9 +426,6 @@ button{border:0;background:transparent;cursor:pointer;padding:0;}
 .dr-quick{display:flex;gap:6px;margin-top:8px;}
 .dr-quick button{flex:1;min-height:40px;border:1px solid var(--line-2);border-radius:999px;background:var(--surface);font-size:13.5px;}
 #drApply{width:100%;min-height:48px;margin-top:8px;border-radius:999px;background:var(--accent2-solid);color:var(--accent2-on);font-size:15px;font-weight:500;}
-/* 手機：往下滑收起頂部列、往上滑再出現（不改版面高度，內容不會跳） */
-#topbar{transition:transform .22s ease-out;}
-#topbar.tb-hide{transform:translateY(-100%);}
 #filSummary{display:flex;align-items:center;flex-wrap:wrap;gap:7px;padding:6px 10px 8px 14px;
   background:rgba(235,237,200,.82);border-top:1px solid rgba(75,81,32,.16);}
 #filSummary[hidden]{display:none;}
@@ -515,7 +512,6 @@ button{border:0;background:transparent;cursor:pointer;padding:0;}
   <div id="scroller">
     <header id="topbar">
       <div id="brandline"><b>Fashion Selection</b><button id="acctBtn" type="button">LINE 登入</button></div>
-      <div id="ranges" role="group" aria-label="依發佈日快速看"></div>
       <div id="pills"></div>
       <div id="filSummary" hidden></div>
   <div id="progress"><div id="progressFill"></div></div>
@@ -614,6 +610,7 @@ button{border:0;background:transparent;cursor:pointer;padding:0;}
       </div>
       <div class="grp-head"><div><div class="grp-t">日期範圍</div><div class="grp-s">依發佈日；品項、顏色、品牌條件會保留</div></div></div>
       <div id="dateRng">
+        <div id="ranges" role="group" aria-label="依發佈日快速看"></div>
         <div class="dr-row"><input type="date" id="drFrom" aria-label="起日"><span>～</span><input type="date" id="drTo" aria-label="迄日"></div>
         <div class="dr-quick"><button type="button" data-dq="week">本週</button><button type="button" data-dq="lastweek">上週</button><button type="button" data-dq="month">本月</button><button type="button" data-dq="lastmonth">上個月</button></div>
         <button type="button" id="drApply">套用日期範圍</button>
@@ -1692,16 +1689,6 @@ $("dateRng").addEventListener("click",e=>{
   pickCustom(dr_iso(a),dr_iso(b));
 });
 dr_sync();
-
-/* 手機：往下滑收起頂部列，往上滑（或回到最上面）再出現 */
-let _lastY=0;
-$("scroller").addEventListener("scroll",()=>{
-  if(isDesk())return;
-  const y=$("scroller").scrollTop,tb=$("topbar");
-  if(y<80||y<_lastY-6)tb.classList.remove("tb-hide");
-  else if(y>_lastY+6)tb.classList.add("tb-hide");
-  _lastY=y;
-},{passive:true});
 
 let qt;
 $("search").addEventListener("input",()=>{
