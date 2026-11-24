@@ -43,7 +43,8 @@
   /* 導覽列高度 = 按鈕 66px + 底部安全區。
      原本還外加 22px，iPhone 上變成 66+34+22，按鈕下面多出一條空白，
      看起來沒有貼齊螢幕底部。安全區本身就是要留的距離，不必再加。 */
-  --navh:calc(66px + max(8px, env(safe-area-inset-bottom,0px)));
+  --navpad:max(6px, calc(env(safe-area-inset-bottom,0px) - 14px));   /* 底部安全區只留一部分，Home 條在按鈕底緣也不影響點擊 */
+  --navh:calc(52px + var(--navpad));
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 html,body{height:100%;margin:0;overflow:hidden;}
@@ -165,10 +166,10 @@ button{border:0;background:transparent;cursor:pointer;padding:0;}
   background:var(--surface-2);border-top:1px solid rgba(31,34,28,.1);
   padding-bottom:0;
   backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);}
-#bottomnav button{min-height:var(--navh);padding-bottom:max(8px, env(safe-area-inset-bottom,0px));box-sizing:border-box;background:transparent;color:var(--ink-2);
+#bottomnav button{min-height:var(--navh);padding-bottom:var(--navpad);box-sizing:border-box;background:transparent;color:var(--ink-2);
   font-size:13.5px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;}
 #bottomnav button+button{border-left:1px solid rgba(31,34,28,.1);}
-#bottomnav svg{width:21px;height:21px;}
+#bottomnav svg{width:20px;height:20px;}
 #bottomnav button.on{background:var(--beige-deep);color:var(--accent-ink);}
 #navFav.on{background:var(--accent-soft);color:var(--accent-ink);}
 #navFil.on{color:var(--accent-ink);background:var(--accent-softer);}
